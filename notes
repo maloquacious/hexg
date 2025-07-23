@@ -1,0 +1,11 @@
+Create a method that returns the coordinates of a corner of a regular hexagon for a Layout.
+
+The corner will be indexed by an integer in the range of 0..5. Coerce values outside this range into the range. 
+
+function pointy_hex_corner(center, size, i):
+    var angle_deg = 60 * i - 30°
+    var angle_rad = PI / 180 * angle_deg
+    return Point(center.x + size * cos(angle_rad),
+                 center.y + size * sin(angle_rad))
+
+We know that we will need to adapt this method later to handle non-regular hexagons.
