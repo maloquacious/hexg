@@ -4,7 +4,9 @@
 // https://www.redblobgames.com/grids/hexagons/implementation.html
 package hexg
 
-import "math"
+import (
+	"math"
+)
 
 // 1.0 Hex coordinates
 
