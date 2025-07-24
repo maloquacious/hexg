@@ -75,6 +75,16 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
                     </span></p>
                     {{if .GitStatus}}<pre>{{.GitStatus}}</pre>{{end}}
                 </div>
+                <button 
+                    hx-get="/status" 
+                    hx-target="#git-status"
+                    x-on:click="refreshing = true"
+                    x-on:htmx:after-request="refreshing = false"
+                    x-bind:disabled="refreshing"
+                >
+                    <span x-show="!refreshing">Refresh Git Status</span>
+                    <span x-show="refreshing">Refreshing...</span>
+                </button>
             </section>
 
             <section>
@@ -137,17 +147,6 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
                     </div>
                 </div>
             </section>
-
-            <button 
-                hx-get="/status" 
-                hx-target="#git-status"
-                x-on:click="refreshing = true"
-                x-on:htmx:after-request="refreshing = false"
-                x-bind:disabled="refreshing"
-            >
-                <span x-show="!refreshing">Refresh Git Status</span>
-                <span x-show="refreshing">Refreshing...</span>
-            </button>
         </div>
     </main>
 
