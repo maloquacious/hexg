@@ -33,6 +33,10 @@ type OffsetCoord struct {
 	col, row int
 }
 
+func (oc OffsetCoord) String() string {
+	return fmt.Sprintf("%d,%d", oc.col, oc.row)
+}
+
 // Point represents a screen coordinate
 type Point struct {
 	X float64
@@ -206,6 +210,12 @@ func NewLayoutPointy(size, origin Point, shoveOddRowsRight bool) Layout {
 		return new_layout(layout_pointy, size, origin, odd_r)
 	}
 	return new_layout(layout_pointy, size, origin, even_r)
+}
+
+// NewLayoutTribeNet returns a layout with flat-top hexes for TribeNet.
+// You may need to translate the origin from (0,0) to (1,1) when displaying TribeNet coordinates.
+func NewLayoutTribeNet() Layout {
+	return new_layout(layout_flat, Point{1, 1}, Point{0, 0}, even_q)
 }
 
 // IsFlatTop returns true if the layout was created with flat-top hexes.
@@ -727,7 +737,54 @@ func (oc OffsetCoord) roffset_to_cube_odd() Hex {
 
 // 9.0 Other Systems
 
-// 9.1 TribeNet Coordinates
+// 9.1 Compass Points
+
+// The compass points are an approximations, but close to the rose.
+
+// Compass Point  Angle (°)  Flat?  Pointy?
+// -------------  ---------  -----  -------
+// N                0°       ✅
+// NNE             30°              ✅
+// ENE             60°       ✅
+// E               90°              ✅
+// ESE            120°       ✅
+// SSE            150°              ✅
+// S              180°       ✅
+// SSW            210°              ✅
+// WSW            240°       ✅
+// W              270°              ✅
+// WNW            300°       ✅
+// NNW            330°              ✅
+
+type CompassPoint int
+
+const (
+	N   CompassPoint = iota // 0°
+	NNE                     // 30°
+	ENE                     // 60°
+	E                       // 90°
+	ESE                     // 120°
+	SSE                     // 150°
+	S                       // 180°
+	SSW                     // 210°
+	WSW                     // 240°
+	W                       // 270°
+	WNW                     // 300°
+	NNW                     // 330°
+)
+
+var compassPointNames = [...]string{
+	"N", "NNE", "ENE", "E", "ESE", "SSE", "S", "SSW", "WSW", "W", "WNW", "NNW",
+}
+
+func (c CompassPoint) String() string {
+	if N <= c && c <= NNW {
+		return compassPointNames[c]
+	}
+	return "Unknown"
+}
+
+// 9.2 TribeNet Coordinates
 
 // TribeNet coordinates are in the form "AB 0102":
 // - "A" (grid row) and "B" (grid column) identify a sub-map.
@@ -747,7 +804,15 @@ const (
 	tnMaxGridIndex = 26 // A ... Z -> 1 ... 26
 )
 
-// NewTribeNetCoord parses a Tribenet coordinate (eg, "AB 0102") and returns
+func (layout Layout) NewTribeNetCoord(input string) (Hex, error) {
+	oc, err := NewTribeNetOffsetCoord(input)
+	if err != nil {
+		return Hex{}, err
+	}
+	return oc.roffset_to_cube_even(), nil
+}
+
+// NewTribeNetOffsetCoord parses a Tribenet coordinate (eg, "AB 0102") and returns
 // an OffsetCoord. All TribeNet maps are "odd-q,", origin is (1,1) and will
 // be translated to (0,0), sub-maps are 21 rows x 30 columns.
 //
@@ -758,7 +823,7 @@ const (
 // TribeNet coordinate "JK 0609" corresponds to OffsetCoord (163,104).
 // TribeNet coordinate "ZZ 3021" corresponds to OffsetCoord (779,545).
 
-func NewTribeNetCoord(input string) (OffsetCoord, error) {
+func NewTribeNetOffsetCoord(input string) (OffsetCoord, error) {
 	if len(input) != 7 || input[2] != ' ' {
 		return OffsetCoord{}, fmt.Errorf("invalid format: expected 'AB 0102'")
 	}
@@ -816,4 +881,26 @@ func (oc OffsetCoord) ToTribeNetCoord() (string, error) {
 	subCol, subRow := (oc.col%tnColsPerGrid)+1, (oc.row%tnRowsPerGrid)+1
 
 	return fmt.Sprintf("%c%c %02d%02d", gridRowChar, gridColChar, subCol, subRow), nil
+}
+
+// define convenient names for directions on a TribeNet grid.
+const (
+	TNSouthEast int = iota
+	TNNorthEast
+	TNNorth
+	TNNorthWest
+	TNSouthWest
+	TNSouth
+)
+
+var tnCompassPointNames = []string{"SE", "NE", "N", "NW", "SW", "S"}
+
+func TribeNetDirectionString(direction int) string {
+	return tnCompassPointNames[(6+(direction%6))%6]
+}
+
+// TribeNetMove returns the hex moved to using the TribeNet constants for direction.
+// It is more efficient to just call h.Neighbor(direction).
+func (layout Layout) TribeNetMove(h Hex, direction int) Hex {
+	return h.Neighbor(direction)
 }

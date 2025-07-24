@@ -75,15 +75,13 @@ var serveCmd = &cobra.Command{
 	},
 }
 
-func init() {
+func main() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(serveCmd)
 
 	serveCmd.Flags().StringVar(&host, "host", "localhost", "Host to bind to")
 	serveCmd.Flags().StringVar(&port, "port", "3000", "Port to bind to")
-}
 
-func main() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -228,14 +226,14 @@ func handleNeighbors(w http.ResponseWriter, r *http.Request) {
 
 	// Log request details for debugging
 	log.Printf("[neighbors] Content-Type: %s", r.Header.Get("Content-Type"))
-	
+
 	// Parse form data (hx-include sends form data)
 	if err := r.ParseForm(); err != nil {
 		log.Printf("[neighbors] ParseForm error: %v", err)
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
-	
+
 	log.Printf("[neighbors] Form values: %+v", r.Form)
 
 	tnCoords := strings.TrimSpace(r.FormValue("tnCoords"))
@@ -247,7 +245,7 @@ func handleNeighbors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert TribeNet coordinates to OffsetCoord
-	offsetCoord, err := hexg.NewTribeNetCoord(tnCoords)
+	offsetCoord, err := hexg.NewTribeNetOffsetCoord(tnCoords)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid TribeNet coordinates: %v", err), http.StatusBadRequest)
 		return

@@ -54,10 +54,10 @@ func TestTribeNetRoundTrip(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			oc, err := hexg.NewTribeNetCoord(tt.input)
+			oc, err := hexg.NewTribeNetOffsetCoord(tt.input)
 			if err != nil {
 				if !tt.wantErr {
-					t.Errorf("%s: NewTribeNetCoord(%q) error = %v, wantErr %v", tt.name, tt.input, err, tt.wantErr)
+					t.Errorf("%s: NewTribeNetOffsetCoord(%q) error = %v, wantErr %v", tt.name, tt.input, err, tt.wantErr)
 				}
 				return
 			}
