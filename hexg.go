@@ -35,8 +35,8 @@ type OffsetCoord struct {
 
 // Point represents a screen coordinate
 type Point struct {
-	x float64
-	y float64
+	X float64
+	Y float64
 }
 
 // Layout represents the orientation of a hexagonal grid
@@ -220,11 +220,11 @@ func (layout Layout) IsPointyTop() bool {
 
 // NewPoint returns a new Point with specified screen coordinates
 func NewPoint(x, y float64) Point {
-	return Point{x: x, y: y}
+	return Point{X: x, Y: y}
 }
 
 func (p Point) String() string {
-	return fmt.Sprintf("%g,%g", p.x, p.y)
+	return fmt.Sprintf("%g,%g", p.X, p.Y)
 }
 
 // 2.1 Hex to screen
@@ -243,8 +243,8 @@ func (layout Layout) HexToPixel(h Hex) Point {
 func ToPixel(layout Layout, h Hex) Point {
 	M := layout.orientation
 	return Point{
-		x: layout.origin.x + (M.f0*float64(h.q)+M.f1*float64(h.r))*layout.size.x,
-		y: layout.origin.y + (M.f2*float64(h.q)+M.f3*float64(h.r))*layout.size.y,
+		X: layout.origin.X + (M.f0*float64(h.q)+M.f1*float64(h.r))*layout.size.X,
+		Y: layout.origin.Y + (M.f2*float64(h.q)+M.f3*float64(h.r))*layout.size.Y,
 	}
 }
 
@@ -266,9 +266,9 @@ func (layout Layout) PixelToFractionalHex(p Point) FractionalHex {
 // In theory, the origin of that fractional hex will be the pixel.
 func PixelToFractionalHex(layout Layout, p Point) FractionalHex {
 	M := layout.orientation
-	pt := Point{x: (p.x - layout.origin.x) / layout.size.x, y: (p.y - layout.origin.y) / layout.size.y}
-	q := M.b0*pt.x + M.b1*pt.y
-	r := M.b2*pt.x + M.b3*pt.y
+	pt := Point{X: (p.X - layout.origin.X) / layout.size.X, Y: (p.Y - layout.origin.Y) / layout.size.Y}
+	q := M.b0*pt.X + M.b1*pt.Y
+	r := M.b2*pt.X + M.b3*pt.Y
 	return FractionalHex{q: q, r: r, s: -q - r}
 }
 
@@ -295,7 +295,7 @@ func HexCornerOffset(layout Layout, corner int) Point {
 	size := layout.size
 	// todo: is adding corner to start_angle correct?
 	angle := 2.0 * math.Pi * (layout.orientation.start_angle + float64(corner)) / 6
-	return Point{x: size.x * math.Cos(angle), y: size.y * math.Sin(angle)}
+	return Point{X: size.X * math.Cos(angle), Y: size.Y * math.Sin(angle)}
 }
 
 // PolygonCorners returns the location of the six corners of the hex on the grid.
@@ -304,7 +304,7 @@ func PolygonCorners(layout Layout, h Hex) [6]Point {
 	center := layout.HexToPixel(h)
 	for i := 0; i < 6; i++ {
 		offset := layout.HexCornerOffset(i)
-		corners[i] = Point{x: center.x + offset.x, y: center.y + offset.y}
+		corners[i] = Point{X: center.X + offset.X, Y: center.Y + offset.Y}
 	}
 	return corners
 }
