@@ -4,15 +4,26 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/maloquacious/hexg"
+	"github.com/spf13/cobra"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
+)
+
+var (
+	host string
+	port string
+	server *http.Server
 )
 
 type PageData struct {
@@ -35,15 +46,111 @@ type CornerInfo struct {
 	Y      float64
 }
 
+var rootCmd = &cobra.Command{
+	Use:   "server",
+	Short: "Hexg web server",
+	Long:  "A web server for the hexg hexagonal grid package",
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version number",
+	Long:  "Print the version number and exit",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("hexg: version %s\n", hexg.Version())
+	},
+}
+
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Start the web server",
+	Long:  "Start the web server on the specified host and port",
+	Run: func(cmd *cobra.Command, args []string) {
+		startServer()
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(serveCmd)
+	
+	serveCmd.Flags().StringVar(&host, "host", "localhost", "Host to bind to")
+	serveCmd.Flags().StringVar(&port, "port", "3000", "Port to bind to")
+}
+
 func main() {
-	fmt.Printf("hexg: version %s\n", hexg.Version())
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
 
-	http.HandleFunc("/", handleHome)
-	http.HandleFunc("/status", handleStatus)
-	http.HandleFunc("/corners", handleCorners)
+func startServer() {
+	mux := http.NewServeMux()
+	
+	// Web routes
+	mux.HandleFunc("/", handleHome)
+	mux.HandleFunc("/status", handleStatus)
+	mux.HandleFunc("/corners", handleCorners)
+	
+	// API routes
+	mux.HandleFunc("/api/health", handleHealth)
+	mux.HandleFunc("/api/version", handleVersion)
+	mux.HandleFunc("/api/shutdown", handleShutdown)
+	
+	server = &http.Server{
+		Addr:    host + ":" + port,
+		Handler: mux,
+	}
+	
+	// Setup graceful shutdown
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	
+	go func() {
+		<-c
+		fmt.Println("\nShutting down server...")
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Server shutdown error: %v", err)
+		}
+	}()
+	
+	fmt.Printf("Starting server on http://%s:%s\n", host, port)
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		log.Fatal(err)
+	}
+}
 
-	fmt.Println("Starting server on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, `{"status":"healthy","timestamp":"%s"}`, time.Now().UTC().Format(time.RFC3339))
+}
+
+func handleVersion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, `{"version":"%s"}`, hexg.Version())
+}
+
+func handleShutdown(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, `{"status":"shutting down"}`)
+	
+	go func() {
+		time.Sleep(100 * time.Millisecond) // Allow response to be sent
+		fmt.Println("Shutdown requested via API")
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Server shutdown error: %v", err)
+		}
+	}()
 }
 
 func handleHome(w http.ResponseWriter, r *http.Request) {
@@ -190,10 +297,36 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
     </footer>
 
     <style>
-        .status-clean { color: green; font-weight: bold; }
-        .status-dirty { color: orange; font-weight: bold; }
-        pre { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
-        footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; text-align: center; color: #666; }
+        /* Force light mode to fix readability issues */
+        :root {
+            color-scheme: light only;
+        }
+        
+        * {
+            color-scheme: light only;
+        }
+        
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .status-clean { color: #008000; font-weight: bold; }
+        .status-dirty { color: #ff8c00; font-weight: bold; }
+        pre { 
+            background: #f5f5f5 !important; 
+            color: #000000 !important;
+            padding: 1rem; 
+            border-radius: 4px; 
+            overflow-x: auto; 
+        }
+        footer { 
+            margin-top: 2rem; 
+            padding-top: 1rem; 
+            border-top: 1px solid #eee; 
+            text-align: center; 
+            color: #666; 
+        }
     </style>
 </body>
 </html>`
@@ -390,5 +523,3 @@ func min(a, b int) int {
 	}
 	return b
 }
-
-

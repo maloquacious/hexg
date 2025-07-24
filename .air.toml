@@ -3,7 +3,7 @@ testdata_dir = "testdata"
 tmp_dir = "testdata/tmp"
 
 [build]
-  args_bin = ["serve", "--host", "localhost", "--port", "8030"]
+  args_bin = ["serve", "--host", "localhost", "--port", "3000"]
   bin = "./dist/server"
   cmd = "go build -o dist/server ./cmd/server"
   delay = 1000
