@@ -1,0 +1,4 @@
+<p>Status: <span class="{{if .GitDirty}}status-dirty{{else}}status-clean{{end}}">
+    {{if .GitDirty}}Dirty{{else}}Clean{{end}}
+</span></p>
+{{if .GitStatus}}<pre>{{.GitStatus}}</pre>{{end}}

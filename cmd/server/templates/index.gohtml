@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hexg Package Info</title>
+    <link rel="stylesheet" href="https://unpkg.com/missing.css@1.1.1">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
+</head>
+<body>
+    <main>
+        <h1>Hexg Package Information</h1>
+        
+        <div x-data="{ refreshing: false }">
+            <section>
+                <h2>Package Version</h2>
+                <p><strong>{{.Version}}</strong></p>
+            </section>
+
+            <section>
+                <h2>Git Status</h2>
+                <div id="git-status">
+                    <p>Status: <span class="{{if .GitDirty}}status-dirty{{else}}status-clean{{end}}">
+                        {{if .GitDirty}}Dirty{{else}}Clean{{end}}
+                    </span></p>
+                    {{if .GitStatus}}<pre>{{.GitStatus}}</pre>{{end}}
+                </div>
+                <button 
+                    hx-get="/status" 
+                    hx-target="#git-status"
+                    x-on:click="refreshing = true"
+                    x-on:htmx:after-request="refreshing = false"
+                    x-bind:disabled="refreshing"
+                >
+                    <span x-show="!refreshing">Refresh Git Status</span>
+                    <span x-show="refreshing">Refreshing...</span>
+                </button>
+            </section>
+
+            <section>
+                <h2>Cell Neighbors</h2>
+                <div x-data="{ tnCoords: 'AA 0101' }">
+                    <div style="margin-bottom: 1rem;">
+                        <label for="tn-coords">TN Coords:</label>
+                        <input type="text" id="tn-coords" name="tnCoords" x-model="tnCoords" placeholder="AA 0101" style="margin-left: 0.5rem; width: 200px;">
+                        <button 
+                            hx-post="/neighbors" 
+                            hx-target="#neighbors-display"
+                            hx-include="#tn-coords"
+                            style="margin-left: 0.5rem;"
+                        >
+                            Update Neighbors
+                        </button>
+                    </div>
+                    <div id="neighbors-display">
+                        <p>Neighbors of hex (0,0,0):</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Direction</th>
+                                    <th>Coordinates</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .Neighbors}}
+                                <tr>
+                                    <td>{{.Direction}}</td>
+                                    <td>{{.Hex}}</td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>Hexagon Corners</h2>
+                <div x-data="{ sizeX: 1, sizeY: 1, originX: 0, originY: 0 }">
+                    <div style="margin-bottom: 1rem;">
+                        <h3>Layout Parameters</h3>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; max-width: 600px;">
+                            <div>
+                                <label for="size-x">Size X:</label>
+                                <input type="number" id="size-x" x-model="sizeX" step="0.1" min="0.1" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label for="size-y">Size Y:</label>
+                                <input type="number" id="size-y" x-model="sizeY" step="0.1" min="0.1" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label for="origin-x">Origin X:</label>
+                                <input type="number" id="origin-x" x-model="originX" step="0.1" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label for="origin-y">Origin Y:</label>
+                                <input type="number" id="origin-y" x-model="originY" step="0.1" style="width: 100%;">
+                            </div>
+                        </div>
+                        <button 
+                            hx-get="/corners" 
+                            hx-target="#corners-display"
+                            hx-vals="{&quot;sizeX&quot;: sizeX, &quot;sizeY&quot;: sizeY, &quot;originX&quot;: originX, &quot;originY&quot;: originY}"
+                            style="margin-top: 1rem;"
+                        >
+                            Update Corners
+                        </button>
+                    </div>
+                    <div id="corners-display">
+                        <div style="display: flex; gap: 2rem; align-items: flex-start;">
+                            <div>
+                                <p>Corner locations for flat layout:</p>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Corner</th>
+                                            <th>Point (x, y)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{range .Corners}}
+                                        <tr>
+                                            <td>{{.Corner}}</td>
+                                            <td>({{.X}}, {{.Y}})</td>
+                                        </tr>
+                                        {{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div>
+                                <p>Hexagon visualization:</p>
+                                <svg width="200" height="200" viewBox="-3 -3 6 6" style="border: 1px solid #ccc; background: #f9f9f9;">
+                                    <polygon 
+                                        points="{{range $i, $corner := .Corners}}{{if $i}}, {{end}}{{$corner.X}},{{$corner.Y}}{{end}}"
+                                        fill="none" 
+                                        stroke="#333" 
+                                        stroke-width="0.1"
+                                    />
+                                    {{range .Corners}}
+                                    <circle cx="{{.X}}" cy="{{.Y}}" r="0.1" fill="#666"/>
+                                    <text x="{{.X}}" y="{{.Y}}" dy="-0.2" text-anchor="middle" font-size="0.3" fill="#333">{{.Corner}}</text>
+                                    {{end}}
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>Current time (UTC): {{.CurrentTime}}</p>
+    </footer>
+
+    <style>
+        /* Force light mode to fix readability issues */
+        :root {
+            color-scheme: light only;
+        }
+        
+        * {
+            color-scheme: light only;
+        }
+        
+        body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .status-clean { color: #008000; font-weight: bold; }
+        .status-dirty { color: #ff8c00; font-weight: bold; }
+        pre { 
+            background: #f5f5f5 !important; 
+            color: #000000 !important;
+            padding: 1rem; 
+            border-radius: 4px; 
+            overflow-x: auto; 
+        }
+        footer { 
+            margin-top: 2rem; 
+            padding-top: 1rem; 
+            border-top: 1px solid #eee; 
+            text-align: center; 
+            color: #666; 
+        }
+    </style>
+</body>
+</html>

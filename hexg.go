@@ -651,6 +651,13 @@ func (oc OffsetCoord) qoffset_to_cube_odd() Hex {
 	return Hex{q: q, r: r, s: s}
 }
 
+func (oc OffsetCoord) ToCubeOdd() Hex {
+	q := oc.col
+	r := oc.row - int((oc.col+ODD*(oc.col&1))/2)
+	s := -q - r
+	return Hex{q: q, r: r, s: s}
+}
+
 // panics on invalid input
 func (h Hex) roffset_from_cube(offset int) OffsetCoord {
 	if !(offset == EVEN || offset == ODD) {

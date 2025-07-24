@@ -1,0 +1,36 @@
+<div style="display: flex; gap: 2rem; align-items: flex-start;">
+    <div>
+        <p>Corner locations for flat layout:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Corner</th>
+                    <th>Point (x, y)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Corners}}
+                <tr>
+                    <td>{{.Corner}}</td>
+                    <td>({{.X}}, {{.Y}})</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <p>Hexagon visualization:</p>
+        <svg width="200" height="200" viewBox="-3 -3 6 6" style="border: 1px solid #ccc; background: #f9f9f9;">
+            <polygon 
+                points="{{range $i, $corner := .Corners}}{{if $i}}, {{end}}{{$corner.X}},{{$corner.Y}}{{end}}"
+                fill="none" 
+                stroke="#333" 
+                stroke-width="0.1"
+            />
+            {{range .Corners}}
+            <circle cx="{{.X}}" cy="{{.Y}}" r="0.1" fill="#666"/>
+            <text x="{{.X}}" y="{{.Y}}" dy="-0.2" text-anchor="middle" font-size="0.3" fill="#333">{{.Corner}}</text>
+            {{end}}
+        </svg>
+    </div>
+</div>

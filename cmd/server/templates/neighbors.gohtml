@@ -1,0 +1,17 @@
+<p>Neighbors of hex {{.CenterHex}}:</p>
+<table>
+    <thead>
+        <tr>
+            <th>Direction</th>
+            <th>Coordinates</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Neighbors}}
+        <tr>
+            <td>{{.Direction}}</td>
+            <td>{{.Hex}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
