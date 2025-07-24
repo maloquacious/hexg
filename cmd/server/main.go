@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -39,6 +40,7 @@ func main() {
 
 	http.HandleFunc("/", handleHome)
 	http.HandleFunc("/status", handleStatus)
+	http.HandleFunc("/corners", handleCorners)
 
 	fmt.Println("Starting server on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -110,40 +112,73 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 
             <section>
                 <h2>Hexagon Corners</h2>
-                <div style="display: flex; gap: 2rem; align-items: flex-start;">
-                    <div>
-                        <p>Corner locations for flat layout:</p>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Corner</th>
-                                    <th>Point (x, y)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {{range .Corners}}
-                                <tr>
-                                    <td>{{.Corner}}</td>
-                                    <td>({{.X}}, {{.Y}})</td>
-                                </tr>
-                                {{end}}
-                            </tbody>
-                        </table>
+                <div x-data="{ sizeX: 1, sizeY: 1, originX: 0, originY: 0 }">
+                    <div style="margin-bottom: 1rem;">
+                        <h3>Layout Parameters</h3>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; max-width: 600px;">
+                            <div>
+                                <label for="size-x">Size X:</label>
+                                <input type="number" id="size-x" x-model="sizeX" step="0.1" min="0.1" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label for="size-y">Size Y:</label>
+                                <input type="number" id="size-y" x-model="sizeY" step="0.1" min="0.1" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label for="origin-x">Origin X:</label>
+                                <input type="number" id="origin-x" x-model="originX" step="0.1" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label for="origin-y">Origin Y:</label>
+                                <input type="number" id="origin-y" x-model="originY" step="0.1" style="width: 100%;">
+                            </div>
+                        </div>
+                        <button 
+                            hx-get="/corners" 
+                            hx-target="#corners-display"
+                            hx-vals="{&quot;sizeX&quot;: sizeX, &quot;sizeY&quot;: sizeY, &quot;originX&quot;: originX, &quot;originY&quot;: originY}"
+                            style="margin-top: 1rem;"
+                        >
+                            Update Corners
+                        </button>
                     </div>
-                    <div>
-                        <p>Hexagon visualization:</p>
-                        <svg width="200" height="200" viewBox="-3 -3 6 6" style="border: 1px solid #ccc; background: #f9f9f9;">
-                            <polygon 
-                                points="{{range $i, $corner := .Corners}}{{if $i}}, {{end}}{{$corner.X}},{{$corner.Y}}{{end}}"
-                                fill="none" 
-                                stroke="#333" 
-                                stroke-width="0.1"
-                            />
-                            {{range .Corners}}
-                            <circle cx="{{.X}}" cy="{{.Y}}" r="0.1" fill="#666"/>
-                            <text x="{{.X}}" y="{{.Y}}" dy="-0.2" text-anchor="middle" font-size="0.3" fill="#333">{{.Corner}}</text>
-                            {{end}}
-                        </svg>
+                    <div id="corners-display">
+                        <div style="display: flex; gap: 2rem; align-items: flex-start;">
+                            <div>
+                                <p>Corner locations for flat layout:</p>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Corner</th>
+                                            <th>Point (x, y)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{range .Corners}}
+                                        <tr>
+                                            <td>{{.Corner}}</td>
+                                            <td>({{.X}}, {{.Y}})</td>
+                                        </tr>
+                                        {{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div>
+                                <p>Hexagon visualization:</p>
+                                <svg width="200" height="200" viewBox="-3 -3 6 6" style="border: 1px solid #ccc; background: #f9f9f9;">
+                                    <polygon 
+                                        points="{{range $i, $corner := .Corners}}{{if $i}}, {{end}}{{$corner.X}},{{$corner.Y}}{{end}}"
+                                        fill="none" 
+                                        stroke="#333" 
+                                        stroke-width="0.1"
+                                    />
+                                    {{range .Corners}}
+                                    <circle cx="{{.X}}" cy="{{.Y}}" r="0.1" fill="#666"/>
+                                    <text x="{{.X}}" y="{{.Y}}" dy="-0.2" text-anchor="middle" font-size="0.3" fill="#333">{{.Corner}}</text>
+                                    {{end}}
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -193,6 +228,73 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleCorners(w http.ResponseWriter, r *http.Request) {
+	// Parse parameters
+	sizeX, _ := strconv.ParseFloat(r.URL.Query().Get("sizeX"), 64)
+	sizeY, _ := strconv.ParseFloat(r.URL.Query().Get("sizeY"), 64)
+	originX, _ := strconv.ParseFloat(r.URL.Query().Get("originX"), 64)
+	originY, _ := strconv.ParseFloat(r.URL.Query().Get("originY"), 64)
+	
+	// Set defaults if not provided
+	if sizeX == 0 {
+		sizeX = 1
+	}
+	if sizeY == 0 {
+		sizeY = 1
+	}
+	
+	corners := getHexagonCornersWithParams(sizeX, sizeY, originX, originY)
+	
+	data := struct{ Corners []CornerInfo }{Corners: corners}
+	
+	tmpl := `<div style="display: flex; gap: 2rem; align-items: flex-start;">
+        <div>
+            <p>Corner locations for flat layout:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Corner</th>
+                        <th>Point (x, y)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Corners}}
+                    <tr>
+                        <td>{{.Corner}}</td>
+                        <td>({{.X}}, {{.Y}})</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <p>Hexagon visualization:</p>
+            <svg width="200" height="200" viewBox="-3 -3 6 6" style="border: 1px solid #ccc; background: #f9f9f9;">
+                <polygon 
+                    points="{{range $i, $corner := .Corners}}{{if $i}}, {{end}}{{$corner.X}},{{$corner.Y}}{{end}}"
+                    fill="none" 
+                    stroke="#333" 
+                    stroke-width="0.1"
+                />
+                {{range .Corners}}
+                <circle cx="{{.X}}" cy="{{.Y}}" r="0.1" fill="#666"/>
+                <text x="{{.X}}" y="{{.Y}}" dy="-0.2" text-anchor="middle" font-size="0.3" fill="#333">{{.Corner}}</text>
+                {{end}}
+            </svg>
+        </div>
+    </div>`
+
+	t, err := template.New("corners").Parse(tmpl)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := t.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func getPageData() PageData {
 	version := hexg.Version().String()
 	gitStatus, gitDirty := getGitStatus()
@@ -226,7 +328,11 @@ func getOriginNeighbors() []NeighborInfo {
 }
 
 func getHexagonCorners() []CornerInfo {
-	l := hexg.NewLayoutFlat(hexg.NewPoint(1, 1), hexg.NewPoint(0, 0), false)
+	return getHexagonCornersWithParams(1, 1, 0, 0)
+}
+
+func getHexagonCornersWithParams(sizeX, sizeY, originX, originY float64) []CornerInfo {
+	l := hexg.NewLayoutFlat(hexg.NewPoint(sizeX, sizeY), hexg.NewPoint(originX, originY), false)
 	var corners []CornerInfo
 	
 	for corner, point := range l.PolygonCorners() {
