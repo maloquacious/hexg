@@ -43,7 +43,8 @@ type Point struct {
 	Y float64
 }
 
-// Layout represents the orientation of a hexagonal grid
+// Layout represents the orientation of a hexagonal grid.
+// Layouts default to point-top, horizontal, odd rows pushed right.
 type Layout struct {
 	orientation orientation
 
@@ -56,8 +57,8 @@ type Layout struct {
 	// set it to Point(0, 0) if you do not need to translate the transformation.
 	origin Point
 
-	// offset is
-	offset int
+	// offset is used for OffsetCoord neighbors
+	offset layoutOffset
 }
 
 // GridStore is a map of Hex indexed by the hash of the Hex.
@@ -183,39 +184,70 @@ var (
 	}
 )
 
-// new_layout creates a new Layout with the orientation, size, and origin.
-// it is not exported since it is only used as a helper for the NewLayoutXXX constructors.
-func new_layout(o orientation, size, origin Point, offset int) Layout {
+// NewLayoutFlat returns a layout with flat-top hexes, vertical layout, odd columns pushed down.
+// Size and origin are used when calculating screen pixels.
+func NewLayoutFlat(size, origin Point) Layout {
 	return Layout{
-		orientation: o,
+		orientation: layout_flat,
 		size:        size,
 		origin:      origin,
-		offset:      offset,
+		offset:      odd_q,
 	}
 }
 
-// NewLayoutFlat returns a layout with flat-top hexes.
-// Size and origin are used when calculating screen pixels.
-func NewLayoutFlat(size, origin Point, shoveOddColumnsDown bool) Layout {
-	if shoveOddColumnsDown {
-		return new_layout(layout_flat, size, origin, odd_q)
-	}
-	return new_layout(layout_flat, size, origin, even_q)
-}
-
-// NewLayoutPointy returns a layout with point-top hexes.
+// NewLayoutPointy returns a layout with pointy-top hexes, horizontal layout, odd rows pushed right.
 // Size and origin are used when calculating screen pixels.
 func NewLayoutPointy(size, origin Point, shoveOddRowsRight bool) Layout {
-	if shoveOddRowsRight {
-		return new_layout(layout_pointy, size, origin, odd_r)
+	return Layout{
+		orientation: layout_pointy,
+		size:        size,
+		origin:      origin,
+		offset:      odd_r,
 	}
-	return new_layout(layout_pointy, size, origin, even_r)
 }
 
-// NewLayoutTribeNet returns a layout with flat-top hexes for TribeNet.
-// You may need to translate the origin from (0,0) to (1,1) when displaying TribeNet coordinates.
-func NewLayoutTribeNet() Layout {
-	return new_layout(layout_flat, Point{1, 1}, Point{0, 0}, even_q)
+// NewLayoutEvenQ returns a layout with flat-top hexes, vertical layout, shoves even columns down.
+// Size and origin are used when calculating screen pixels.
+func NewLayoutEvenQ(size, origin Point) Layout {
+	return Layout{
+		orientation: layout_flat,
+		size:        size,
+		origin:      origin,
+		offset:      even_q,
+	}
+}
+
+// NewLayoutEvenR returns a layout with pointy-top hexes, horizontal layout, shoves even rows right.
+// Size and origin are used when calculating screen pixels.
+func NewLayoutEvenR(size, origin Point) Layout {
+	return Layout{
+		orientation: layout_pointy,
+		size:        size,
+		origin:      origin,
+		offset:      even_r,
+	}
+}
+
+// NewLayoutOddQ returns a layout with flat-top hexes, vertical layout, shoves odd columns down.
+// Size and origin are used when calculating screen pixels.
+func NewLayoutOddQ(size, origin Point) Layout {
+	return Layout{
+		orientation: layout_flat,
+		size:        size,
+		origin:      origin,
+		offset:      odd_q,
+	}
+}
+
+// NewLayoutOddR returns a layout with pointy-top hexes, horizontal layout, shoves odd rows right.
+// Size and origin are used when calculating screen pixels.
+func NewLayoutOddR(size, origin Point) Layout {
+	return Layout{
+		orientation: layout_pointy,
+		size:        size,
+		origin:      origin,
+		offset:      odd_r,
+	}
 }
 
 // IsFlatTop returns true if the layout was created with flat-top hexes.
@@ -226,6 +258,26 @@ func (layout Layout) IsFlatTop() bool {
 // IsPointyTop returns true if the layout was created with point-top hexes.
 func (layout Layout) IsPointyTop() bool {
 	return layout.offset == odd_r || layout.offset == even_r
+}
+
+// IsEvenQ returns true if the layout supports even-q offset coordinates (vertical layout, shoves even columns down).
+func (layout Layout) IsEvenQ() bool {
+	return layout.offset == even_q
+}
+
+// IsEvenR returns true if the layout supports even-r offset coordinates (horizontal layout, shoves even rows right).
+func (layout Layout) IsEvenR() bool {
+	return layout.offset == even_r
+}
+
+// IsOddQ returns true if the layout supports odd-q offset coordinates (vertical layout, shoves odd columns down).
+func (layout Layout) IsOddQ() bool {
+	return layout.offset == odd_q
+}
+
+// IsOddR returns true if the layout supports odd-r offset coordinates (horizontal layout, shoves odd rows right).
+func (layout Layout) IsOddR() bool {
+	return layout.offset == odd_r
 }
 
 // NewPoint returns a new Point with specified screen coordinates
@@ -598,122 +650,185 @@ func (h Hex) RotateRight() Hex {
 //   * With truncated, (-1) % 2 is -1. This will cause the algorithms
 //     on this page to break for negative coordinates.
 
-// NewOffsetCoord returns a new OffsetCord.
-func NewOffsetCoord(col, row int) OffsetCoord {
+func OffsetCoordFromColRow(col, row int) OffsetCoord {
 	return OffsetCoord{col: col, row: row}
 }
 
+// HexFromOffsetCoord returns a new Hex from the OffsetCoord.
+func (layout Layout) HexFromOffsetCoord(oc OffsetCoord) Hex {
+	col, row := oc.col, oc.row
+	switch layout.offset {
+	case even_q: // flat-top, vertical layout, shoves even columns down
+		q, r := col, row-(col+EVEN*(col&1))/2
+		return Hex{q: q, r: r, s: -q - r}
+	case odd_q: // flat-top, vertical layout, shoves odd columns down
+		q, r := col, row-(col+ODD*(col&1))/2
+		return Hex{q: q, r: r, s: -q - r}
+	case even_r: // pointy-top, horizontal layout, shoves even rows right
+		q, r := col-(row+EVEN*(row&1))/2, row
+		return Hex{q: q, r: r, s: -q - r}
+	case odd_r: // pointy-top, horizontal layout, shoves odd rows right
+		q, r := col-(row+ODD*(row&1))/2, row
+		return Hex{q: q, r: r, s: -q - r}
+	}
+	panic("assert(!reached)")
+}
+
+// HexFromOffsetColRow returns a new Hex using offset column and row coordinates.
+func (layout Layout) HexFromOffsetColRow(col, row int) Hex {
+	switch layout.offset {
+	case even_q: // flat-top, vertical layout, shoves even columns down
+		q, r := col, row-(col+EVEN*(col&1))/2
+		return Hex{q: q, r: r, s: -q - r}
+	case odd_q: // flat-top, vertical layout, shoves odd columns down
+		q, r := col, row-(col+EVEN*(col&1))/2
+		return Hex{q: q, r: r, s: -q - r}
+	case even_r: // pointy-top, horizontal layout, shoves even rows right
+		q, r := col-(row+EVEN*(row&1))/2, row
+		return Hex{q: q, r: r, s: -q - r}
+	case odd_r: // pointy-top, horizontal layout, shoves odd rows right
+		q, r := col-(row+ODD*(row&1))/2, row
+		return Hex{q: q, r: r, s: -q - r}
+	}
+	panic("assert(!reached)")
+}
+
 // there are four types of OffsetCoord
+
+type layoutOffset int
+
 const (
-	odd_r int = iota
+	odd_r layoutOffset = iota
 	even_r
 	odd_q
 	even_q
+)
 
+const (
 	EVEN = +1
 	ODD  = -1
 )
 
-// panics on invalid input
-func (h Hex) qoffset_from_cube(offset int) OffsetCoord {
-	if !(offset == EVEN || offset == ODD) {
-		panic("assert(offset == EVEN || offset == ODD)")
+//// panics on invalid input
+//func (h Hex) qoffset_from_cube(offset int) OffsetCoord {
+//	if !(offset == EVEN || offset == ODD) {
+//		panic("assert(offset == EVEN || offset == ODD)")
+//	}
+//	col := h.q
+//	row := h.r + int((h.q+offset*(h.q&1))/2)
+//	return OffsetCoord{col: col, row: row}
+//}
+//
+//func (h Hex) qoffset_from_cube_even() OffsetCoord {
+//	col := h.q
+//	row := h.r + int((h.q+EVEN*(h.q&1))/2)
+//	return OffsetCoord{col: col, row: row}
+//}
+//
+//func (h Hex) qoffset_from_cube_odd() OffsetCoord {
+//	col := h.q
+//	row := h.r + int((h.q+ODD*(h.q&1))/2)
+//	return OffsetCoord{col: col, row: row}
+//}
+//
+//// panics on invalid input
+//func (oc OffsetCoord) qoffset_to_cube(offset int) Hex {
+//	if !(offset == EVEN || offset == ODD) {
+//		panic("assert(offset == EVEN || offset == ODD)")
+//	}
+//	q := oc.col
+//	r := oc.row - int((oc.col+offset*(oc.col&1))/2)
+//	s := -q - r
+//	return Hex{q: q, r: r, s: s}
+//}
+//
+//func (oc OffsetCoord) qoffset_to_cube_even() Hex {
+//	q := oc.col
+//	r := oc.row - int((oc.col+EVEN*(oc.col&1))/2)
+//	s := -q - r
+//	return Hex{q: q, r: r, s: s}
+//}
+//
+//func (oc OffsetCoord) qoffset_to_cube_odd() Hex {
+//	q := oc.col
+//	r := oc.row - int((oc.col+ODD*(oc.col&1))/2)
+//	s := -q - r
+//	return Hex{q: q, r: r, s: s}
+//}
+//
+//func (oc OffsetCoord) ToCubeOdd() Hex {
+//	q := oc.col
+//	r := oc.row - int((oc.col+ODD*(oc.col&1))/2)
+//	s := -q - r
+//	return Hex{q: q, r: r, s: s}
+//}
+
+// HexToOffsetCoord returns the offset coordinates of the hex.
+// Uses the offset from the layout to shift rows and columns correctly.
+func (layout Layout) HexToOffsetCoord(h Hex) OffsetCoord {
+	switch layout.offset {
+	case even_q:
+		col, row := h.q, h.r+(h.q+EVEN*(h.q&1))/2
+		return OffsetCoord{col: col, row: row}
+	case odd_q:
+		col, row := h.q, h.r+(h.q+ODD*(h.q&1))/2
+		return OffsetCoord{col: col, row: row}
+	case even_r:
+		col, row := h.q+(h.r+EVEN*(h.r&1))/2, h.r
+		return OffsetCoord{col: col, row: row}
+	case odd_r:
+		col, row := h.q+(h.r+ODD*(h.r&1))/2, h.r
+		return OffsetCoord{col: col, row: row}
 	}
-	col := h.q
-	row := h.r + int((h.q+offset*(h.q&1))/2)
-	return OffsetCoord{col: col, row: row}
+	panic("assert(!reached)")
 }
 
-func (h Hex) qoffset_from_cube_even() OffsetCoord {
-	col := h.q
-	row := h.r + int((h.q+EVEN*(h.q&1))/2)
-	return OffsetCoord{col: col, row: row}
-}
-
-func (h Hex) qoffset_from_cube_odd() OffsetCoord {
-	col := h.q
-	row := h.r + int((h.q+ODD*(h.q&1))/2)
-	return OffsetCoord{col: col, row: row}
-}
-
-// panics on invalid input
-func (oc OffsetCoord) qoffset_to_cube(offset int) Hex {
-	if !(offset == EVEN || offset == ODD) {
-		panic("assert(offset == EVEN || offset == ODD)")
-	}
-	q := oc.col
-	r := oc.row - int((oc.col+offset*(oc.col&1))/2)
-	s := -q - r
-	return Hex{q: q, r: r, s: s}
-}
-
-func (oc OffsetCoord) qoffset_to_cube_even() Hex {
-	q := oc.col
-	r := oc.row - int((oc.col+EVEN*(oc.col&1))/2)
-	s := -q - r
-	return Hex{q: q, r: r, s: s}
-}
-
-func (oc OffsetCoord) qoffset_to_cube_odd() Hex {
-	q := oc.col
-	r := oc.row - int((oc.col+ODD*(oc.col&1))/2)
-	s := -q - r
-	return Hex{q: q, r: r, s: s}
-}
-
-func (oc OffsetCoord) ToCubeOdd() Hex {
-	q := oc.col
-	r := oc.row - int((oc.col+ODD*(oc.col&1))/2)
-	s := -q - r
-	return Hex{q: q, r: r, s: s}
-}
-
-// panics on invalid input
-func (h Hex) roffset_from_cube(offset int) OffsetCoord {
-	if !(offset == EVEN || offset == ODD) {
-		panic("assert(offset == EVEN || offset == ODD)")
-	}
-	col := h.q + int((h.r+offset*(h.r&1))/2)
-	row := h.r
-	return OffsetCoord{col: col, row: row}
-}
-
-func (h Hex) roffset_from_cube_even() OffsetCoord {
-	col := h.q + int((h.r+EVEN*(h.r&1))/2)
-	row := h.r
-	return OffsetCoord{col: col, row: row}
-}
-
-func (h Hex) roffset_from_cube_odd() OffsetCoord {
-	col := h.q + int((h.r+ODD*(h.r&1))/2)
-	row := h.r
-	return OffsetCoord{col: col, row: row}
-}
-
-// panics on invalid input
-func (oc OffsetCoord) roffset_to_cube(offset int) Hex {
-	if !(offset == EVEN || offset == ODD) {
-		panic("assert(offset == EVEN || offset == ODD)")
-	}
-	q := oc.col - int((oc.row+offset*(oc.row&1))/2)
-	r := oc.row
-	s := -q - r
-	return Hex{q: q, r: r, s: s}
-}
-
-func (oc OffsetCoord) roffset_to_cube_even() Hex {
-	q := oc.col - int((oc.row+EVEN*(oc.row&1))/2)
-	r := oc.row
-	s := -q - r
-	return Hex{q: q, r: r, s: s}
-}
-
-func (oc OffsetCoord) roffset_to_cube_odd() Hex {
-	q := oc.col - int((oc.row+ODD*(oc.row&1))/2)
-	r := oc.row
-	s := -q - r
-	return Hex{q: q, r: r, s: s}
-}
+//// panics on invalid input
+//func (h Hex) roffset_from_cube(offset int) OffsetCoord {
+//	if !(offset == EVEN || offset == ODD) {
+//		panic("assert(offset == EVEN || offset == ODD)")
+//	}
+//	col := h.q + int((h.r+offset*(h.r&1))/2)
+//	row := h.r
+//	return OffsetCoord{col: col, row: row}
+//}
+//
+//func (h Hex) roffset_from_cube_even() OffsetCoord {
+//	col := h.q + int((h.r+EVEN*(h.r&1))/2)
+//	row := h.r
+//	return OffsetCoord{col: col, row: row}
+//}
+//
+//func (h Hex) roffset_from_cube_odd() OffsetCoord {
+//	col := h.q + int((h.r+ODD*(h.r&1))/2)
+//	row := h.r
+//	return OffsetCoord{col: col, row: row}
+//}
+//
+//// panics on invalid input
+//func (oc OffsetCoord) roffset_to_cube(offset int) Hex {
+//	if !(offset == EVEN || offset == ODD) {
+//		panic("assert(offset == EVEN || offset == ODD)")
+//	}
+//	q := oc.col - int((oc.row+offset*(oc.row&1))/2)
+//	r := oc.row
+//	s := -q - r
+//	return Hex{q: q, r: r, s: s}
+//}
+//
+//func (oc OffsetCoord) roffset_to_cube_even() Hex {
+//	q := oc.col - int((oc.row+EVEN*(oc.row&1))/2)
+//	r := oc.row
+//	s := -q - r
+//	return Hex{q: q, r: r, s: s}
+//}
+//
+//func (oc OffsetCoord) roffset_to_cube_odd() Hex {
+//	q := oc.col - int((oc.row+ODD*(oc.row&1))/2)
+//	r := oc.row
+//	s := -q - r
+//	return Hex{q: q, r: r, s: s}
+//}
 
 // 7.0 Notes
 
@@ -798,43 +913,56 @@ func (c CompassPoint) String() string {
 // TribeNet coordinates are converted to OffsetCoord using "odd-q" layout,
 // with the origin translated by (-1, -1) so "AA 0101" becomes (0,0).
 
+// NewLayoutTribeNet returns a layout with flat-top hexes for TribeNet.
+//
+// All TribeNet maps are "odd-q,", origin is (1,1) and will
+// be translated to (0,0), sub-maps are 21 rows x 30 columns.
+//
+// You may need to translate the origin from (0,0) to (1,1) when displaying TribeNet coordinates.
+func NewLayoutTribeNet() Layout {
+	return NewLayoutEvenQ(Point{1, 1}, Point{0, 0})
+}
+
 const (
 	tnRowsPerGrid  = 21
 	tnColsPerGrid  = 30
 	tnMaxGridIndex = 26 // A ... Z -> 1 ... 26
 )
 
-func (layout Layout) NewTribeNetCoord(input string) (Hex, error) {
-	oc, err := NewTribeNetOffsetCoord(input)
+// HexFromTribeNetCoord converts the TribeNet coordinates to Hex.
+func (layout Layout) HexFromTribeNetCoord(input string) (Hex, error) {
+	col, row, err := TribeNetToColRow(input)
 	if err != nil {
 		return Hex{}, err
 	}
-	return oc.roffset_to_cube_even(), nil
+	return layout.HexFromOffsetColRow(col, row), nil
 }
 
-// NewTribeNetOffsetCoord parses a Tribenet coordinate (eg, "AB 0102") and returns
-// an OffsetCoord. All TribeNet maps are "odd-q,", origin is (1,1) and will
-// be translated to (0,0), sub-maps are 21 rows x 30 columns.
+func (layout Layout) HexToTribeNetCoord(h Hex) (string, error) {
+	return layout.HexToOffsetCoord(h).ToTribeNetCoord()
+}
+
+// TribeNetToColRow parses a Tribenet coordinate (eg, "AB 0102") and returns
+// the column and row.
 //
 // Invalid inputs will return an error.
 //
-// TribeNet coordinate "AA 0101" corresponds to OffsetCoord (  0,  0).
-// TribeNet coordinate "BC 0824" corresponds to OffsetCoord ( 61, 43).
-// TribeNet coordinate "JK 0609" corresponds to OffsetCoord (163,104).
-// TribeNet coordinate "ZZ 3021" corresponds to OffsetCoord (779,545).
-
-func NewTribeNetOffsetCoord(input string) (OffsetCoord, error) {
+// TribeNet coordinate "AA 0101" corresponds to (  0,  0).
+// TribeNet coordinate "BC 0824" corresponds to ( 61, 43).
+// TribeNet coordinate "JK 0609" corresponds to (163,104).
+// TribeNet coordinate "ZZ 3021" corresponds to (779,545).
+func TribeNetToColRow(input string) (col, row int, err error) {
 	if len(input) != 7 || input[2] != ' ' {
-		return OffsetCoord{}, fmt.Errorf("invalid format: expected 'AB 0102'")
+		return 0, 0, fmt.Errorf("invalid format: expected 'AB 0102'")
 	}
 	gridRowRune, gridColRune := rune(input[0]), rune(input[1])
 	subColStr, subRowStr := input[3:5], input[5:7]
 
 	// convert letters to 0-based grid index (A=0, B=1, ...)
 	if !(unicode.IsUpper(gridRowRune) && unicode.IsLetter(gridRowRune)) {
-		return OffsetCoord{}, fmt.Errorf("invalid grid row: must be uppercase A-Z")
+		return 0, 0, fmt.Errorf("invalid grid row: must be uppercase A-Z")
 	} else if !(unicode.IsUpper(gridColRune) && unicode.IsLetter(gridColRune)) {
-		return OffsetCoord{}, fmt.Errorf("invalid grid column: must be uppercase A-Z")
+		return 0, 0, fmt.Errorf("invalid grid column: must be uppercase A-Z")
 	}
 	gridRowOffset := int(gridRowRune-'A') * tnRowsPerGrid
 	gridColOffset := int(gridColRune-'A') * tnColsPerGrid
@@ -842,22 +970,20 @@ func NewTribeNetOffsetCoord(input string) (OffsetCoord, error) {
 	// subCol is 1-based in the input; converted to 0-based for OffsetCoord
 	subCol, err := strconv.Atoi(subColStr)
 	if !(err == nil && 1 <= subCol && subCol <= tnColsPerGrid) {
-		return OffsetCoord{}, fmt.Errorf("invalid sub-map column: %s", subColStr)
+		return 0, 0, fmt.Errorf("invalid sub-map column: %s", subColStr)
 	}
 	subCol -= 1
 
 	// subRow is 1-based in the input; converted to 0-based for OffsetCoord
 	subRow, err := strconv.Atoi(subRowStr)
 	if !(err == nil && 1 <= subRow && subRow <= tnRowsPerGrid) {
-		return OffsetCoord{}, fmt.Errorf("invalid sub-map row: %s", subRowStr)
+		return 0, 0, fmt.Errorf("invalid sub-map row: %s", subRowStr)
 	}
 	subRow -= 1
 
-	// convert global row and column to an offset coordinate
-	return OffsetCoord{
-		col: gridColOffset + subCol,
-		row: gridRowOffset + subRow,
-	}, nil
+	// convert global row and column to column and row coordinates
+	col, row = gridColOffset+subCol, gridRowOffset+subRow
+	return col, row, nil
 }
 
 // ToTribeNetCoord converts an OffsetCoord to a TribeNet coordinate string ("AB 0102").
