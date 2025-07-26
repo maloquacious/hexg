@@ -33,8 +33,16 @@ type OffsetCoord struct {
 	col, row int
 }
 
+func NewOffsetCoord(col, row int) OffsetCoord {
+	return OffsetCoord{col: col, row: row}
+}
+
 func (oc OffsetCoord) String() string {
 	return fmt.Sprintf("%d,%d", oc.col, oc.row)
+}
+
+func (oc OffsetCoord) ConciseString() string {
+	return fmt.Sprintf("%+d%+d", oc.col, oc.row)
 }
 
 // Point represents a screen coordinate
@@ -178,6 +186,20 @@ var (
 
 	// layout_flat returns a flat top orientation.
 	layout_flat = orientation{
+		f0: 3.0 / 2.0, f1: 0.0, f2: math.Sqrt(3.0) / 2.0, f3: math.Sqrt(3.0),
+		b0: 2.0 / 3.0, b1: 0.0, b2: -1.0 / 3.0, b3: math.Sqrt(3.0) / 3.0,
+		start_angle: 0.0,
+	}
+
+	// horizontalOrientation is for pointy-top hex layouts (staggered columns, horizontal rows)
+	horizontalOrientation = orientation{
+		f0: math.Sqrt(3.0), f1: math.Sqrt(3.0) / 2.0, f2: 0.0, f3: 3.0 / 2.0,
+		b0: math.Sqrt(3.0) / 3.0, b1: -1.0 / 3.0, b2: 0.0, b3: 2.0 / 3.0,
+		start_angle: 0.5,
+	}
+
+	// verticalOrientation is for flat-top hex layouts (vertical columns, staggered rows)
+	verticalOrientation = orientation{
 		f0: 3.0 / 2.0, f1: 0.0, f2: math.Sqrt(3.0) / 2.0, f3: math.Sqrt(3.0),
 		b0: 2.0 / 3.0, b1: 0.0, b2: -1.0 / 3.0, b3: math.Sqrt(3.0) / 3.0,
 		start_angle: 0.0,
@@ -695,6 +717,30 @@ func (layout Layout) HexFromOffsetColRow(col, row int) Hex {
 
 // there are four types of OffsetCoord
 
+type LayoutOffset_e int
+
+const (
+	OddR LayoutOffset_e = iota
+	EvenR
+	OddQ
+	EvenQ
+)
+
+func (e LayoutOffset_e) String() string {
+	switch e {
+	case OddR:
+		return "odd-r"
+	case EvenR:
+		return "even-r"
+	case OddQ:
+		return "odd-q"
+	case EvenQ:
+		return "even-q"
+	default:
+		panic(fmt.Sprintf("assert(e != %d)", e))
+	}
+}
+
 type layoutOffset int
 
 const (
@@ -854,50 +900,79 @@ func (layout Layout) HexToOffsetCoord(h Hex) OffsetCoord {
 
 // 9.1 Compass Points
 
-// The compass points are an approximations, but close to the rose.
-
-// Compass Point  Angle (°)  Flat?  Pointy?
-// -------------  ---------  -----  -------
-// N                0°       ✅
-// NNE             30°              ✅
-// ENE             60°       ✅
-// E               90°              ✅
-// ESE            120°       ✅
-// SSE            150°              ✅
-// S              180°       ✅
-// SSW            210°              ✅
-// WSW            240°       ✅
-// W              270°              ✅
-// WNW            300°       ✅
-// NNW            330°              ✅
-
-type CompassPoint int
-
+// The compass points are approximations, but close to the rose.
+// ✅ = supported, 🚫 = not supported.
+//
+// +------+-------+---------+---------+
+// | Name | Angle |  Flat?  | Pointy? |
+// +------+-------+---------+---------+
+// | N    |   0°  |   ✅    |   🚫    |
+// | NNE  |  30°  |   🚫    |   ✅    |
+// | ENE  |  60°  |   ✅    |   🚫    |
+// | E    |  90°  |   🚫    |   ✅    |
+// | ESE  | 120°  |   ✅    |   🚫    |
+// | SSE  | 150°  |   🚫    |   ✅    |
+// | S    | 180°  |   ✅    |   🚫    |
+// | SSW  | 210°  |   🚫    |   ✅    |
+// | WSW  | 240°  |   ✅    |   🚫    |
+// | W    | 270°  |   🚫    |   ✅    |
+// | WNW  | 300°  |   ✅    |   🚫    |
+// | NNW  | 330°  |   🚫    |   ✅    |
+// +------+-------+---------+---------+
+//
+// Using an unsupported value for your layout may cause unexpected results.
 const (
-	N   CompassPoint = iota // 0°
-	NNE                     // 30°
-	ENE                     // 60°
-	E                       // 90°
-	ESE                     // 120°
-	SSE                     // 150°
-	S                       // 180°
-	SSW                     // 210°
-	WSW                     // 240°
-	W                       // 270°
-	WNW                     // 300°
-	NNW                     // 330°
+	N   int = 2
+	NNE int = 1
+	ENE int = 1
+	E   int = 0
+	ESE int = 0
+	SSE int = 5
+	S   int = 5
+	SSW int = 4
+	WSW int = 4
+	W   int = 3
+	WNW int = 3
+	NNW int = 2
 )
 
-var compassPointNames = [...]string{
-	"N", "NNE", "ENE", "E", "ESE", "SSE", "S", "SSW", "WSW", "W", "WNW", "NNW",
+var (
+	bearingToDirection = map[string]int{
+		"N":   2,
+		"NNE": 1,
+		"ENE": 1,
+		"E":   0,
+		"ESE": 0,
+		"SSE": 5,
+		"S":   5,
+		"SSW": 4,
+		"WSW": 4,
+		"W":   3,
+		"WNW": 3,
+		"NNW": 2,
+	}
+)
+
+// BearingToDirection returns the direction for a compass point.
+// Panics on invalid input.
+func BearingToDirection(p string) int {
+	dir, ok := bearingToDirection[p]
+	if !ok {
+		panic(fmt.Sprintf("assert(p != %q)", p))
+	}
+	return dir
 }
 
-func (c CompassPoint) String() string {
-	if N <= c && c <= NNW {
-		return compassPointNames[c]
+var (
+	// horizontalDirectionToBearing maps a direction to the compass point for a horizontal layout
+	horizontalDirectionToBearing = []string{
+		"E", "NNE", "NNW", "W", "SSW", "SSE",
 	}
-	return "Unknown"
-}
+	// verticalDirectionToBearing maps a direction to the compass point for a vertical layout
+	verticalDirectionToBearing = []string{
+		"ESE", "ENE", "N", "WNW", "WSW", "S",
+	}
+)
 
 // 9.2 TribeNet Coordinates
 
