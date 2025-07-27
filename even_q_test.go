@@ -136,3 +136,32 @@ func TestEvenQ_OffsetToHex(t *testing.T) {
 		}
 	}
 }
+
+func TestEvenQ_Bounds(t *testing.T) {
+	l := hexg.NewVerticalOddQLayout(hexg.NewPoint(1, 1), hexg.NewPoint(0, 0))
+
+	hexes := []hexg.Hex{
+		hexg.NewHex(1, 2, -3), // offset: (+1,+2)
+		hexg.NewHex(0, 0, 0),  // offset: (+0,+0)
+		hexg.NewHex(2, 0, -2), // offset: (+2,-1)
+		hexg.NewHex(-1, 1, 0), // offset: (-1,+1)
+		hexg.NewHex(1, -2, 1), // offset: (+1,-3)
+	}
+
+	expectedTopLeft := hexg.NewHex(1, -2, 1)     // offset: (+1,-3)
+	expectedBottomRight := hexg.NewHex(1, 2, -3) // offset: (+1,+2)
+
+	t.Run("TopLeftHex", func(t *testing.T) {
+		actual := hexg.TopLeftHex(l, hexes...)
+		if actual.ConciseString() != expectedTopLeft.ConciseString() {
+			t.Errorf("top-left: got %q, want %q\n", actual.ConciseString(), expectedTopLeft.ConciseString())
+		}
+	})
+
+	t.Run("BottomRightHex", func(t *testing.T) {
+		actual := hexg.BottomRightHex(l, hexes...)
+		if actual.ConciseString() != expectedBottomRight.ConciseString() {
+			t.Errorf("bottom-right: got %q, want %q\n", actual.ConciseString(), expectedBottomRight.ConciseString())
+		}
+	})
+}
