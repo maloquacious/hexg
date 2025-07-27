@@ -7,7 +7,21 @@ import (
 	"testing"
 )
 
+func TestTribeNet_Layout(t *testing.T) {
+	l := hexg.NewTribeNetLayout()
+
+	if l.IsHorizontal() {
+		t.Fatalf("tn3: isHorizontal: got %v, want %v\n", !l.IsHorizontal(), false)
+	} else if !l.IsVertical() {
+		t.Fatalf("tn3: isVertical: got %v, want %v\n", l.IsVertical(), true)
+	} else if l.OffsetType() != hexg.OddQ {
+		t.Fatalf("tn3: offsetType: got %q, want %q\n", l.OffsetType(), hexg.OddQ)
+	}
+}
+
 func TestTribeNet_Neighbor(t *testing.T) {
+	l := hexg.NewTribeNetLayout()
+
 	from := hexg.NewHex(0, 0, 0)
 	for _, move := range []struct {
 		id        int
@@ -15,50 +29,56 @@ func TestTribeNet_Neighbor(t *testing.T) {
 		expect    string
 	}{
 		// move one hex and then back
-		{1, hexg.TNSouthEast, "+1+0-1"}, {2, hexg.TNNorthWest, "+0+0+0"},
-		{3, hexg.TNNorthEast, "+1-1+0"}, {4, hexg.TNSouthWest, "+0+0+0"},
-		{5, hexg.TNNorth, "+0-1+1"}, {6, hexg.TNSouth, "+0+0+0"},
-		{7, hexg.TNNorthWest, "-1+0+1"}, {8, hexg.TNSouthEast, "+0+0+0"},
-		{9, hexg.TNSouthWest, "-1+1+0"}, {10, hexg.TNNorthEast, "+0+0+0"},
-		{11, hexg.TNSouth, "+0+1-1"}, {12, hexg.TNNorth, "+0+0+0"},
+		{id: 1, direction: hexg.TNNorth, expect: "+0-1+1"},
+		{id: 2, direction: hexg.TNSouth, expect: "+0+0+0"},
+		{id: 3, direction: hexg.TNNorthEast, expect: "+1-1+0"},
+		{id: 4, direction: hexg.TNSouthWest, expect: "+0+0+0"},
+		{id: 5, direction: hexg.TNSouthEast, expect: "+1+0-1"},
+		{id: 6, direction: hexg.TNNorthWest, expect: "+0+0+0"},
+		{id: 7, direction: hexg.TNSouth, expect: "+0+1-1"},
+		{id: 8, direction: hexg.TNNorth, expect: "+0+0+0"},
+		{id: 9, direction: hexg.TNSouthWest, expect: "-1+1+0"},
+		{id: 10, direction: hexg.TNNorthEast, expect: "+0+0+0"},
+		{id: 11, direction: hexg.TNNorthWest, expect: "-1+0+1"},
+		{id: 12, direction: hexg.TNSouthEast, expect: "+0+0+0"},
 	} {
 		to := from.Neighbor(move.direction)
 		if to.ConciseString() != move.expect {
-			t.Fatalf("move: %3d: from %s: move %q: got %q, want %q\n", move.id, from.ConciseString(), hexg.TribeNetDirectionString(move.direction), to.ConciseString(), move.expect)
+			t.Fatalf("move: %3d: from %s: move %q: got %q, want %q\n", move.id, from.ConciseString(), l.DirectionToBearing(move.direction), to.ConciseString(), move.expect)
 		}
 		from = to
 	}
 }
 
 func TestTribeNet_ToHex(t *testing.T) {
-	//l := hexg.NewLayoutTribeNet()
-	//for _, tc := range []struct {
-	//	input  string
-	//	expect string
-	//}{
-	//	{"AA 0101", "+0+0+0"},
-	//	{"AA 0201", "+1+0-1"},
-	//	{"AA 0301", "+2-1-1"},
-	//} {
-	//	h, err := l.HexFromTribeNetCoord(tc.input)
-	//	if err != nil {
-	//		t.Errorf("tn %q: hex: error %v\n", tc.input, err)
-	//		continue
-	//	}
-	//	if h.ConciseString() != tc.expect {
-	//		t.Errorf("tn %q: hex: got %q, wanted %q\n", tc.input, h.ConciseString(), tc.expect)
-	//		continue
-	//	}
-	//	tn, err := l.HexToTribeNetCoord(h)
-	//	if err != nil {
-	//		t.Errorf("tn %q: hex: error %v\n", tc.input, err)
-	//		continue
-	//	}
-	//	if tn != tc.input {
-	//		t.Errorf("tn %q: hex: %q: tn got %q, wanted %q\n", tc.input, h.ConciseString(), tn, tc.input)
-	//		continue
-	//	}
-	//}
+	l := hexg.NewTribeNetLayout()
+
+	for _, tc := range []struct {
+		input  string
+		expect string
+	}{
+		{"AA 0101", "+0+0+0"},
+		{"AA 0201", "+1+0-1"},
+		{"AA 0301", "+2-1-1"},
+	} {
+		h, err := l.TribeNetCoordToHex(tc.input)
+		if err != nil {
+			t.Errorf("tn %q: hex: error %v\n", tc.input, err)
+			continue
+		} else if h.ConciseString() != tc.expect {
+			t.Errorf("tn %q: hex: got %q, wanted %q\n", tc.input, h.ConciseString(), tc.expect)
+			continue
+		}
+		tn, err := l.HexToTribeNetCoord(h)
+		if err != nil {
+			t.Errorf("tn %q: hex: error %v\n", tc.input, err)
+			continue
+		}
+		if tn != tc.input {
+			t.Errorf("tn %q: hex: %q: tn got %q, wanted %q\n", tc.input, h.ConciseString(), tn, tc.input)
+			continue
+		}
+	}
 }
 
 func TestTribeNet_RoundTrip(t *testing.T) {
