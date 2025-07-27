@@ -29,20 +29,18 @@ type FractionalHex struct {
 }
 
 // OffsetCoord implements offset coordinates for hexes.
+// We assume that this will be used only for labels,
+// so all calculations must pass through Hex.
 type OffsetCoord struct {
-	col, row int
-}
-
-func NewOffsetCoord(col, row int) OffsetCoord {
-	return OffsetCoord{col: col, row: row}
+	Col, Row int
 }
 
 func (oc OffsetCoord) String() string {
-	return fmt.Sprintf("%d,%d", oc.col, oc.row)
+	return fmt.Sprintf("%d,%d", oc.Col, oc.Row)
 }
 
 func (oc OffsetCoord) ConciseString() string {
-	return fmt.Sprintf("%+d%+d", oc.col, oc.row)
+	return fmt.Sprintf("%+d%+d", oc.Col, oc.Row)
 }
 
 // Point represents a screen coordinate
@@ -672,13 +670,13 @@ func (h Hex) RotateRight() Hex {
 //   * With truncated, (-1) % 2 is -1. This will cause the algorithms
 //     on this page to break for negative coordinates.
 
-func OffsetCoordFromColRow(col, row int) OffsetCoord {
-	return OffsetCoord{col: col, row: row}
-}
+//func OffsetCoordFromColRow(col, row int) OffsetCoord {
+//	return OffsetCoord{col: col, row: row}
+//}
 
 // HexFromOffsetCoord returns a new Hex from the OffsetCoord.
 func (layout Layout) HexFromOffsetCoord(oc OffsetCoord) Hex {
-	col, row := oc.col, oc.row
+	col, row := oc.Col, oc.Row
 	switch layout.offset {
 	case even_q: // flat-top, vertical layout, shoves even columns down
 		q, r := col, row-(col+EVEN*(col&1))/2
@@ -815,16 +813,16 @@ func (layout Layout) HexToOffsetCoord(h Hex) OffsetCoord {
 	switch layout.offset {
 	case even_q:
 		col, row := h.q, h.r+(h.q+EVEN*(h.q&1))/2
-		return OffsetCoord{col: col, row: row}
+		return OffsetCoord{Col: col, Row: row}
 	case odd_q:
 		col, row := h.q, h.r+(h.q+ODD*(h.q&1))/2
-		return OffsetCoord{col: col, row: row}
+		return OffsetCoord{Col: col, Row: row}
 	case even_r:
 		col, row := h.q+(h.r+EVEN*(h.r&1))/2, h.r
-		return OffsetCoord{col: col, row: row}
+		return OffsetCoord{Col: col, Row: row}
 	case odd_r:
 		col, row := h.q+(h.r+ODD*(h.r&1))/2, h.r
-		return OffsetCoord{col: col, row: row}
+		return OffsetCoord{Col: col, Row: row}
 	}
 	panic("assert(!reached)")
 }
@@ -1070,16 +1068,16 @@ func TribeNetToColRow(input string) (col, row int, err error) {
 //
 // Returns an error if the coordinate falls outside the supported 26×26 letter grid.
 func (oc OffsetCoord) ToTribeNetCoord() (string, error) {
-	if oc.col < 0 || oc.row < 0 {
+	if oc.Col < 0 || oc.Row < 0 {
 		return "", fmt.Errorf("invalid offset coordinates: %v", oc)
 	}
 
-	gridRow, gridCol := oc.row/tnRowsPerGrid, oc.col/tnColsPerGrid
+	gridRow, gridCol := oc.Row/tnRowsPerGrid, oc.Col/tnColsPerGrid
 	if gridRow >= tnMaxGridIndex || gridCol >= tnMaxGridIndex {
 		return "", fmt.Errorf("coordinates out of range for A-Z grid system")
 	}
 	gridRowChar, gridColChar := 'A'+rune(gridRow), 'A'+rune(gridCol)
-	subCol, subRow := (oc.col%tnColsPerGrid)+1, (oc.row%tnRowsPerGrid)+1
+	subCol, subRow := (oc.Col%tnColsPerGrid)+1, (oc.Row%tnRowsPerGrid)+1
 
 	return fmt.Sprintf("%c%c %02d%02d", gridRowChar, gridColChar, subCol, subRow), nil
 }

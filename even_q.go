@@ -59,7 +59,7 @@ func (l VerticalEvenQLayout) HexCorners(h Hex) [6]Point {
 // Uses the offset from the layout to shift rows and columns correctly.
 func (l VerticalEvenQLayout) HexToOffsetCoord(h Hex) OffsetCoord {
 	col, row := h.q, h.r+(h.q+EVEN*(h.q&1))/2
-	return OffsetCoord{col: col, row: row}
+	return OffsetCoord{Col: col, Row: row}
 }
 
 func (l VerticalEvenQLayout) HexToPixel(h Hex) Point {
@@ -84,7 +84,7 @@ func (l VerticalEvenQLayout) OffsetColRowToHex(col, row int) Hex {
 }
 
 func (l VerticalEvenQLayout) OffsetCoordToHex(oc OffsetCoord) Hex {
-	return l.OffsetColRowToHex(oc.col, oc.row)
+	return l.OffsetColRowToHex(oc.Col, oc.Row)
 }
 
 func (l VerticalEvenQLayout) OffsetType() LayoutOffset_e {

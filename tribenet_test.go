@@ -3,10 +3,34 @@
 package hexg_test
 
 import (
+	"github.com/maloquacious/hexg"
 	"testing"
 )
 
-func TestTribeNetToHex(t *testing.T) {
+func TestTribeNet_Neighbor(t *testing.T) {
+	from := hexg.NewHex(0, 0, 0)
+	for _, move := range []struct {
+		id        int
+		direction int
+		expect    string
+	}{
+		// move one hex and then back
+		{1, hexg.TNSouthEast, "+1+0-1"}, {2, hexg.TNNorthWest, "+0+0+0"},
+		{3, hexg.TNNorthEast, "+1-1+0"}, {4, hexg.TNSouthWest, "+0+0+0"},
+		{5, hexg.TNNorth, "+0-1+1"}, {6, hexg.TNSouth, "+0+0+0"},
+		{7, hexg.TNNorthWest, "-1+0+1"}, {8, hexg.TNSouthEast, "+0+0+0"},
+		{9, hexg.TNSouthWest, "-1+1+0"}, {10, hexg.TNNorthEast, "+0+0+0"},
+		{11, hexg.TNSouth, "+0+1-1"}, {12, hexg.TNNorth, "+0+0+0"},
+	} {
+		to := from.Neighbor(move.direction)
+		if to.ConciseString() != move.expect {
+			t.Fatalf("move: %3d: from %s: move %q: got %q, want %q\n", move.id, from.ConciseString(), hexg.TribeNetDirectionString(move.direction), to.ConciseString(), move.expect)
+		}
+		from = to
+	}
+}
+
+func TestTribeNet_ToHex(t *testing.T) {
 	//l := hexg.NewLayoutTribeNet()
 	//for _, tc := range []struct {
 	//	input  string
@@ -37,7 +61,7 @@ func TestTribeNetToHex(t *testing.T) {
 	//}
 }
 
-func TestTribeNetRoundTrip(t *testing.T) {
+func TestTribeNet_RoundTrip(t *testing.T) {
 	//tests := []struct {
 	//	name     string
 	//	input    string
