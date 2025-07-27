@@ -6,7 +6,7 @@ import "github.com/maloquacious/semver"
 
 func Version() semver.Version {
 	return semver.Version{
-		Minor: 9,
+		Minor: 10,
 		Patch: 0,
 	}
 }

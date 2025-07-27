@@ -47,47 +47,49 @@ func TestEvenQ_Neighbor(t *testing.T) {
 
 	// even-q, even column
 	for _, tc := range []struct {
-		id      int
-		from    hexg.Hex
-		bearing string
-		expect  string
+		id       int
+		col, row int
+		bearing  string
+		expect   string
 	}{
-		{id: 1, from: hexg.NewHex(0, 0, 0), bearing: "N", expect: "+0-1"},
-		{id: 2, from: hexg.NewHex(0, 0, 0), bearing: "ENE", expect: "+1+0"},
-		{id: 3, from: hexg.NewHex(0, 0, 0), bearing: "ESE", expect: "+1+1"},
-		{id: 4, from: hexg.NewHex(0, 0, 0), bearing: "S", expect: "+0+1"},
-		{id: 5, from: hexg.NewHex(0, 0, 0), bearing: "WSW", expect: "-1+1"},
-		{id: 6, from: hexg.NewHex(0, 0, 0), bearing: "WNW", expect: "-1+0"},
+		{id: 1, col: 0, row: 0, bearing: "N", expect: "+0-1"},
+		{id: 2, col: 0, row: 0, bearing: "ENE", expect: "+1+0"},
+		{id: 3, col: 0, row: 0, bearing: "ESE", expect: "+1+1"},
+		{id: 4, col: 0, row: 0, bearing: "S", expect: "+0+1"},
+		{id: 5, col: 0, row: 0, bearing: "WSW", expect: "-1+1"},
+		{id: 6, col: 0, row: 0, bearing: "WNW", expect: "-1+0"},
 	} {
+		from := l.OffsetColRowToHex(tc.col, tc.row)
 		direction := hexg.BearingToDirection(tc.bearing)
-		neighbor := tc.from.Neighbor(direction)
+		neighbor := from.Neighbor(direction)
 		to := l.HexToOffsetCoord(neighbor)
 		got := to.ConciseString()
 		if got != tc.expect {
-			t.Errorf("even-col: %d: from %q: %-3s: %q: got %q, want %q\n", tc.id, tc.from.ConciseString(), tc.bearing, neighbor.ConciseString(), got, tc.expect)
+			t.Errorf("even-q: even-col: %d: from %q: %-3s: %q: got %q, want %q\n", tc.id, from.ConciseString(), tc.bearing, neighbor.ConciseString(), got, tc.expect)
 		}
 	}
 
 	// even-q, odd column
 	for _, tc := range []struct {
-		id      int
-		from    hexg.Hex
-		bearing string
-		expect  string
+		id       int
+		col, row int
+		bearing  string
+		expect   string
 	}{
-		{id: 1, from: hexg.NewHex(1, 0, -1), bearing: "N", expect: "+1+0"},
-		{id: 2, from: hexg.NewHex(1, 0, -1), bearing: "ENE", expect: "+2+0"},
-		{id: 3, from: hexg.NewHex(1, 0, -1), bearing: "ESE", expect: "+2+1"},
-		{id: 4, from: hexg.NewHex(1, 0, -1), bearing: "S", expect: "+1+2"},
-		{id: 5, from: hexg.NewHex(1, 0, -1), bearing: "WSW", expect: "+0+1"},
-		{id: 6, from: hexg.NewHex(1, 0, -1), bearing: "WNW", expect: "+0+0"},
+		{id: 1, col: 1, row: 1, bearing: "N", expect: "+1+0"},
+		{id: 2, col: 1, row: 1, bearing: "ENE", expect: "+2+0"},
+		{id: 3, col: 1, row: 1, bearing: "ESE", expect: "+2+1"},
+		{id: 4, col: 1, row: 1, bearing: "S", expect: "+1+2"},
+		{id: 5, col: 1, row: 1, bearing: "WSW", expect: "+0+1"},
+		{id: 6, col: 1, row: 1, bearing: "WNW", expect: "+0+0"},
 	} {
+		from := l.OffsetColRowToHex(tc.col, tc.row)
 		direction := hexg.BearingToDirection(tc.bearing)
-		neighbor := tc.from.Neighbor(direction)
+		neighbor := from.Neighbor(direction)
 		to := l.HexToOffsetCoord(neighbor)
 		got := to.ConciseString()
 		if got != tc.expect {
-			t.Errorf("odd-col : %d: from %q: %-3s: %q: got %q, want %q\n", tc.id, tc.from.ConciseString(), tc.bearing, neighbor.ConciseString(), got, tc.expect)
+			t.Errorf("even-q: odd-col : %d: from %q: %-3s: %q: got %q, want %q\n", tc.id, from.ConciseString(), tc.bearing, neighbor.ConciseString(), got, tc.expect)
 		}
 	}
 }
