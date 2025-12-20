@@ -9,7 +9,7 @@ import (
 )
 
 func TestEvenQ_Layout(t *testing.T) {
-	l := hexg.NewVerticalEvenQLayout(hexg.NewPoint(1, 1), hexg.NewPoint(0, 0))
+	l := hexg.NewVerticalEvenQLayout(NewPoint(1, 1), NewPoint(0, 0))
 
 	if l.IsHorizontal() {
 		t.Fatalf("even-q: isHorizontal: got %v, want %v\n", !l.IsHorizontal(), false)
@@ -21,7 +21,7 @@ func TestEvenQ_Layout(t *testing.T) {
 }
 
 func TestEvenQ_Compass(t *testing.T) {
-	l := hexg.NewVerticalEvenQLayout(hexg.NewPoint(1, 1), hexg.NewPoint(0, 0))
+	l := hexg.NewVerticalEvenQLayout(NewPoint(1, 1), NewPoint(0, 0))
 
 	for _, tc := range []struct {
 		id        int
@@ -43,7 +43,7 @@ func TestEvenQ_Compass(t *testing.T) {
 }
 
 func TestEvenQ_Neighbor(t *testing.T) {
-	l := hexg.NewVerticalEvenQLayout(hexg.NewPoint(1, 1), hexg.NewPoint(0, 0))
+	l := hexg.NewVerticalEvenQLayout(NewPoint(1, 1), NewPoint(0, 0))
 
 	// even-q, even column
 	for _, tc := range []struct {
@@ -95,7 +95,7 @@ func TestEvenQ_Neighbor(t *testing.T) {
 }
 
 func TestEvenQ_OffsetToHex(t *testing.T) {
-	l := hexg.NewVerticalEvenQLayout(hexg.NewPoint(1, 1), hexg.NewPoint(0, 0))
+	l := hexg.NewVerticalEvenQLayout(NewPoint(1, 1), NewPoint(0, 0))
 
 	for _, tc := range []struct {
 		id       int
@@ -138,9 +138,9 @@ func TestEvenQ_OffsetToHex(t *testing.T) {
 }
 
 func TestEvenQ_Bounds(t *testing.T) {
-	l := hexg.NewVerticalOddQLayout(hexg.NewPoint(1, 1), hexg.NewPoint(0, 0))
+	l := hexg.NewVerticalOddQLayout(NewPoint(1, 1), NewPoint(0, 0))
 
-	hexes := []hexg.Hex{
+	hexes := []Hex{
 		hexg.NewHex(1, 2, -3), // offset: (+1,+2)
 		hexg.NewHex(0, 0, 0),  // offset: (+0,+0)
 		hexg.NewHex(2, 0, -2), // offset: (+2,-1)
