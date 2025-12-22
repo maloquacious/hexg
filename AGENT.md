@@ -22,11 +22,6 @@ We use "grid" instead of "map" because map is a reserved word in Go.
 
 ## V1 Release Plan
 
-### Phase 2: Clean Up Root
-- [ ] Review and organize exports
-- [ ] Ensure consistent naming conventions
-- [ ] Remove unused code or dead paths
-
 ### Phase 3: Documentation
 - [ ] Add Go doc comments to all exported functions in hex.go
 - [ ] Add Go doc comments to all exported functions in conversions.go

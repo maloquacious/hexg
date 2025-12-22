@@ -4,22 +4,28 @@ package hexg
 
 import "fmt"
 
+// OffsetCoord represents offset coordinates (col, row) for hex grids.
 type OffsetCoord struct {
 	Col, Row int
 }
 
+// NewOffsetCoord returns an OffsetCoord initialized with the given column and row.
 func NewOffsetCoord(col, row int) OffsetCoord {
 	return OffsetCoord{Col: col, Row: row}
 }
 
+// String returns the coordinates formatted as "(col,row)".
 func (oc OffsetCoord) String() string {
 	return fmt.Sprintf("(%d,%d)", oc.Col, oc.Row)
 }
 
+// ConciseString returns the coordinates formatted as "+col+row".
 func (oc OffsetCoord) ConciseString() string {
 	return fmt.Sprintf("%+d%+d", oc.Col, oc.Row)
 }
 
+// CubeToQOffset converts cube coordinates to q-offset coordinates.
+// If even is true, uses even-q offset; otherwise uses odd-q offset.
 func (h Hex) CubeToQOffset(even bool) OffsetCoord {
 	col := h.q
 	var row int
@@ -31,13 +37,15 @@ func (h Hex) CubeToQOffset(even bool) OffsetCoord {
 	return OffsetCoord{Col: col, Row: row}
 }
 
-func (h OffsetCoord) QOffsetToCube(even bool) Hex {
-	q := h.Col
+// QOffsetToCube converts q-offset coordinates to cube coordinates.
+// If even is true, uses even-q offset; otherwise uses odd-q offset.
+func (oc OffsetCoord) QOffsetToCube(even bool) Hex {
+	q := oc.Col
 	var r int
 	if even {
-		r = h.Row - (h.Col+1*(h.Col&1))/2
+		r = oc.Row - (oc.Col+1*(oc.Col&1))/2
 	} else {
-		r = h.Row - (h.Col-1*(h.Col&1))/2
+		r = oc.Row - (oc.Col-1*(oc.Col&1))/2
 	}
 	return Hex{
 		q: q,
@@ -46,6 +54,8 @@ func (h OffsetCoord) QOffsetToCube(even bool) Hex {
 	}
 }
 
+// CubeToROffset converts cube coordinates to r-offset coordinates.
+// If even is true, uses even-r offset; otherwise uses odd-r offset.
 func (h Hex) CubeToROffset(even bool) OffsetCoord {
 	var col int
 	if even {
@@ -59,14 +69,16 @@ func (h Hex) CubeToROffset(even bool) OffsetCoord {
 	}
 }
 
-func (h OffsetCoord) ROffsetToCube(even bool) Hex {
+// ROffsetToCube converts r-offset coordinates to cube coordinates.
+// If even is true, uses even-r offset; otherwise uses odd-r offset.
+func (oc OffsetCoord) ROffsetToCube(even bool) Hex {
 	var q int
 	if even {
-		q = h.Col - (h.Row+1*(h.Row&1))/2
+		q = oc.Col - (oc.Row+1*(oc.Row&1))/2
 	} else {
-		q = h.Col - (h.Row-1*(h.Row&1))/2
+		q = oc.Col - (oc.Row-1*(oc.Row&1))/2
 	}
-	r := h.Row
+	r := oc.Row
 	return Hex{
 		q: q,
 		r: r,

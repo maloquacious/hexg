@@ -4,20 +4,6 @@ package hexg
 
 import "math"
 
-type Orientation int
-
-const (
-	// LayoutPointy is a pointy top orientation:
-	// * staggered columns
-	// * horizontal rows
-	LayoutPointy Orientation = iota
-
-	// LayoutFlat is a flat top orientation:
-	// * vertical columns
-	// * staggered rows
-	LayoutFlat
-)
-
 // LayoutOffset describes the layout (horizontal row or vertical columns)
 // and which way odd rows and columns are pushed or pulled.
 type LayoutOffset int
@@ -114,6 +100,7 @@ func NewLayout(offset LayoutOffset, size, origin Point) Layout {
 	panic("invalid offset")
 }
 
+// IsEven returns true if the layout uses even offset coordinates.
 func (l *Layout) IsEven() bool {
 	return l.offset == EvenQ || l.offset == EvenR
 }
@@ -128,14 +115,17 @@ func (l *Layout) IsEvenR() bool {
 	return l.offset == EvenR
 }
 
+// IsFlat returns true if the layout uses flat-top hexes.
 func (l *Layout) IsFlat() bool {
 	return l.offset == OddQ || l.offset == EvenQ
 }
 
+// IsHorizontal returns true if the layout has horizontal rows.
 func (l *Layout) IsHorizontal() bool {
 	return l.offset == OddR || l.offset == EvenR
 }
 
+// IsOdd returns true if the layout uses odd offset coordinates.
 func (l *Layout) IsOdd() bool {
 	return l.offset == OddQ || l.offset == OddR
 }
@@ -150,10 +140,12 @@ func (l *Layout) IsOddR() bool {
 	return l.offset == OddR
 }
 
+// IsPointy returns true if the layout uses pointy-top hexes.
 func (l *Layout) IsPointy() bool {
 	return l.offset == OddR || l.offset == EvenR
 }
 
+// IsVertical returns true if the layout has vertical columns.
 func (l *Layout) IsVertical() bool {
 	return l.offset == OddQ || l.offset == EvenQ
 }
@@ -190,6 +182,7 @@ func (l *Layout) BoundingBox(hexes ...Hex) (upperLeft, lowerRight Hex) {
 	return l.OffsetToCube(upperLeftCoords), l.OffsetToCube(lowerRightCoords)
 }
 
+// CubeToOffset converts cube coordinates to offset coordinates based on the layout.
 func (l *Layout) CubeToOffset(h Hex) OffsetCoord {
 	switch l.offset {
 	case OddR:
@@ -204,6 +197,7 @@ func (l *Layout) CubeToOffset(h Hex) OffsetCoord {
 	panic("invalid offset")
 }
 
+// OffsetToCube converts offset coordinates to cube coordinates based on the layout.
 func (l *Layout) OffsetToCube(oc OffsetCoord) Hex {
 	switch l.offset {
 	case OddR:
@@ -218,6 +212,8 @@ func (l *Layout) OffsetToCube(oc OffsetCoord) Hex {
 	panic("invalid offset")
 }
 
+// RotateLeft rotates the hex 60° counter-clockwise around the origin.
+// The underlying operation depends on the layout orientation.
 func (l *Layout) RotateLeft(h Hex) Hex {
 	switch l.offset {
 	case OddR:
@@ -232,6 +228,8 @@ func (l *Layout) RotateLeft(h Hex) Hex {
 	panic("invalid offset")
 }
 
+// RotateRight rotates the hex 60° clockwise around the origin.
+// The underlying operation depends on the layout orientation.
 func (l *Layout) RotateRight(h Hex) Hex {
 	switch l.offset {
 	case OddR:
@@ -296,14 +294,12 @@ func (l *Layout) PolygonCorners(h Hex) [6]Point {
 	return corners
 }
 
-// PixelToHexRounded turns a fractional hex into a regular hex coordinate.
+// PixelToHexRounded converts a screen pixel to the nearest hex coordinate.
 func (l *Layout) PixelToHexRounded(p Point) Hex {
 	return l.PixelToFractionalHex(p).Round()
 }
 
-// TODO: Grid builders (Parallelogram*, Triangle*, Hexagon, Rectangle) should
-// use Layout properties in a future update.
-
+// ParallelogramQR returns a parallelogram-shaped grid using q and r axes.
 func (l *Layout) ParallelogramQR(q1, r1 int, q2, r2 int) HexSet {
 	gs := make(HexSet)
 	for q := q1; q <= q2; q++ {
@@ -314,6 +310,7 @@ func (l *Layout) ParallelogramQR(q1, r1 int, q2, r2 int) HexSet {
 	return gs
 }
 
+// ParallelogramQS returns a parallelogram-shaped grid using q and s axes.
 func (l *Layout) ParallelogramQS(q1, s1 int, q2, s2 int) HexSet {
 	gs := make(HexSet)
 	for q := q1; q <= q2; q++ {
@@ -324,6 +321,7 @@ func (l *Layout) ParallelogramQS(q1, s1 int, q2, s2 int) HexSet {
 	return gs
 }
 
+// ParallelogramRS returns a parallelogram-shaped grid using r and s axes.
 func (l *Layout) ParallelogramRS(r1, s1 int, r2, s2 int) HexSet {
 	gs := make(HexSet)
 	for r := r1; r <= r2; r++ {

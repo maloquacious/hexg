@@ -9,10 +9,12 @@ import (
 	"strconv"
 )
 
+// MarshalJSON implements json.Marshaler for Hex.
 func (h Hex) MarshalJSON() ([]byte, error) {
 	return json.Marshal(h.ConciseString())
 }
 
+// UnmarshalJSON implements json.Unmarshaler for Hex.
 func (h *Hex) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -26,10 +28,12 @@ func (h *Hex) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Value implements driver.Valuer for database storage.
 func (h Hex) Value() (driver.Value, error) {
 	return h.ConciseString(), nil
 }
 
+// Scan implements sql.Scanner for database retrieval.
 func (h *Hex) Scan(src any) (err error) {
 	if s, ok := src.(string); ok {
 		*h, err = scanConciseString(s)
