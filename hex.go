@@ -15,9 +15,21 @@ type Hex struct {
 	q, r, s int
 }
 
+// Q returns the q coordinate.
+func (h Hex) Q() int { return h.q }
+
+// R returns the r coordinate.
+func (h Hex) R() int { return h.r }
+
+// S returns the s coordinate.
+func (h Hex) S() int { return h.s }
+
+// QRS returns all three coordinates.
+func (h Hex) QRS() (int, int, int) { return h.q, h.r, h.s }
+
 // Equals returns true if the two hexes have the same coordinates.
 func (h Hex) Equals(b Hex) bool {
-	return h.q == b.q && b.r == b.r && b.s == b.s
+	return h.q == b.q && h.r == b.r && h.s == b.s
 }
 
 // NotEquals returns true if the two hexes have different coordinates.

@@ -1,3 +1,5 @@
+// Copyright (c) 2025 Michael D Henderson. All rights reserved.
+
 package hexg
 
 import (
@@ -11,8 +13,16 @@ func (h Hex) MarshalJSON() ([]byte, error) {
 	return json.Marshal(h.ConciseString())
 }
 
-func (h *Hex) UnmarshalJSON(data []byte) (err error) {
-	*h, err = scanConciseString(string(data))
+func (h *Hex) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	parsed, err := scanConciseString(s)
+	if err != nil {
+		return err
+	}
+	*h = parsed
 	return nil
 }
 

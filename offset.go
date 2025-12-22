@@ -51,7 +51,7 @@ func (h Hex) CubeToROffset(even bool) OffsetCoord {
 	if even {
 		col = h.q + (h.r+1*(h.r&1))/2
 	} else {
-		col = h.q + (h.r+1*(h.r&1))/2
+		col = h.q + (h.r-1*(h.r&1))/2
 	}
 	return OffsetCoord{
 		Col: col,
