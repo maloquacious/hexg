@@ -8,11 +8,12 @@ var (
 	version = semver.Version{
 		Major: 0,
 		Minor: 14,
-		Patch: 5,
+		Patch: 6,
 		Build: semver.Commit(),
 	}
 )
 
+// Version returns the current version of the hexg package.
 func Version() semver.Version {
 	return version
 }

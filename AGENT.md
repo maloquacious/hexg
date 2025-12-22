@@ -22,16 +22,6 @@ We use "grid" instead of "map" because map is a reserved word in Go.
 
 ## V1 Release Plan
 
-### Phase 3: Documentation
-- [ ] Add Go doc comments to all exported functions in hex.go
-- [ ] Add Go doc comments to all exported functions in conversions.go
-- [ ] Add Go doc comments to all exported functions in fractional.go
-- [ ] Add Go doc comments to all exported functions in layout.go
-- [ ] Add Go doc comments to all exported functions in math.go
-- [ ] Add Go doc comments to all exported functions in offset.go
-- [ ] Add Go doc comments to all exported functions in screen.go
-- [ ] Add Go doc comments to all exported functions in json.go
-
 ### Phase 4: README
 - [ ] Create README.md with:
   - Package overview and purpose

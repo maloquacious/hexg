@@ -10,6 +10,7 @@ type Point struct {
 	Y float64
 }
 
+// String returns the coordinates formatted as "x,y".
 func (p Point) String() string {
 	return fmt.Sprintf("%g,%g", p.X, p.Y)
 }
