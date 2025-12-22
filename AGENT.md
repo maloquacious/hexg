@@ -22,16 +22,6 @@ We use "grid" instead of "map" because map is a reserved word in Go.
 
 ## V1 Release Plan
 
-### Phase 1: Tests
-- [ ] Add tests for conversions.go
-- [ ] Add tests for fractional.go
-- [ ] Add tests for layout.go
-- [ ] Add tests for math.go
-- [ ] Add tests for offset.go
-- [ ] Add tests for screen.go
-- [ ] Add tests for json.go
-- [ ] Uncomment and fix TestHex_Neighbor in hex_test.go
-
 ### Phase 2: Clean Up Root
 - [ ] Review and organize exports
 - [ ] Ensure consistent naming conventions

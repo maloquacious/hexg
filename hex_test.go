@@ -60,40 +60,40 @@ func TestHex_Distance(t *testing.T) {
 	}
 }
 
-//func TestHex_Neighbor(t *testing.T) {
-//	from := hexg.NewHex(0, 0, 0)
-//	for _, move := range []struct {
-//		id        int
-//		direction int
-//		expect    string
-//	}{
-//		// move one hex and then back
-//		{id: 1, direction: hexg.E, expect: "+1+0-1"}, {id: 2, direction: hexg.W, expect: "+0+0+0"},
-//		{id: 3, direction: hexg.NNE, expect: "+1-1+0"}, {id: 4, direction: hexg.SSW, expect: "+0+0+0"},
-//		{id: 5, direction: hexg.NNW, expect: "+0-1+1"}, {id: 6, direction: hexg.SSE, expect: "+0+0+0"},
-//		{id: 7, direction: hexg.W, expect: "-1+0+1"}, {id: 8, direction: hexg.E, expect: "+0+0+0"},
-//		{id: 9, direction: hexg.SSW, expect: "-1+1+0"}, {id: 10, direction: hexg.NNE, expect: "+0+0+0"},
-//		{id: 11, direction: hexg.SSE, expect: "+0+1-1"}, {id: 12, direction: hexg.NNW, expect: "+0+0+0"},
-//		// circle around
-//		{id: 13, direction: hexg.E, expect: "+1+0-1"},
-//		{id: 14, direction: hexg.NNE, expect: "+2-1-1"},
-//		{id: 15, direction: hexg.NNW, expect: "+2-2+0"},
-//		{id: 16, direction: hexg.W, expect: "+1-2+1"},
-//		{id: 17, direction: hexg.SSW, expect: "+0-1+1"},
-//		{id: 18, direction: hexg.SSE, expect: "+0+0+0"},
-//		// move three hexes in each direction
-//		{id: 19, direction: hexg.SSW, expect: "-1+1+0"}, {id: 20, direction: hexg.SSW, expect: "-2+2+0"}, {id: 21, direction: hexg.SSW, expect: "-3+3+0"},
-//		{id: 22, direction: hexg.NNW, expect: "-3+2+1"}, {id: 23, direction: hexg.NNW, expect: "-3+1+2"}, {id: 24, direction: hexg.NNW, expect: "-3+0+3"},
-//		{id: 25, direction: hexg.NNE, expect: "-2-1+3"}, {id: 26, direction: hexg.NNE, expect: "-1-2+3"}, {id: 27, direction: hexg.NNE, expect: "+0-3+3"},
-//		{id: 28, direction: hexg.E, expect: "+1-3+2"}, {id: 29, direction: hexg.E, expect: "+2-3+1"}, {id: 30, direction: hexg.E, expect: "+3-3+0"},
-//		{id: 31, direction: hexg.SSE, expect: "+3-2-1"}, {id: 32, direction: hexg.SSE, expect: "+3-1-2"}, {id: 33, direction: hexg.SSE, expect: "+3+0-3"},
-//		{id: 34, direction: hexg.SSW, expect: "+2+1-3"}, {id: 35, direction: hexg.SSW, expect: "+1+2-3"}, {id: 36, direction: hexg.SSW, expect: "+0+3-3"},
-//		{id: 37, direction: hexg.W, expect: "-1+3-2"}, {id: 37, direction: hexg.W, expect: "-2+3-1"}, {id: 38, direction: hexg.W, expect: "-3+3+0"},
-//	} {
-//		to := from.Neighbor(move.direction)
-//		if to.ConciseString() != move.expect {
-//			t.Fatalf("%d: from %q: to %d: got %q, want %q\n", move.id, from.ConciseString(), move.direction, to.ConciseString(), move.expect)
-//		}
-//		from = to
-//	}
-//}
+func TestHex_Neighbor(t *testing.T) {
+	from := hexg.NewHex(0, 0)
+	for _, move := range []struct {
+		id        int
+		direction int
+		expect    string
+	}{
+		// move one hex and then back
+		{id: 1, direction: 0, expect: "+1+0-1"}, {id: 2, direction: 3, expect: "+0+0+0"},
+		{id: 3, direction: 1, expect: "+1-1+0"}, {id: 4, direction: 4, expect: "+0+0+0"},
+		{id: 5, direction: 2, expect: "+0-1+1"}, {id: 6, direction: 5, expect: "+0+0+0"},
+		{id: 7, direction: 3, expect: "-1+0+1"}, {id: 8, direction: 0, expect: "+0+0+0"},
+		{id: 9, direction: 4, expect: "-1+1+0"}, {id: 10, direction: 1, expect: "+0+0+0"},
+		{id: 11, direction: 5, expect: "+0+1-1"}, {id: 12, direction: 2, expect: "+0+0+0"},
+		// circle around
+		{id: 13, direction: 0, expect: "+1+0-1"},
+		{id: 14, direction: 1, expect: "+2-1-1"},
+		{id: 15, direction: 2, expect: "+2-2+0"},
+		{id: 16, direction: 3, expect: "+1-2+1"},
+		{id: 17, direction: 4, expect: "+0-1+1"},
+		{id: 18, direction: 5, expect: "+0+0+0"},
+		// move three hexes in each direction
+		{id: 19, direction: 4, expect: "-1+1+0"}, {id: 20, direction: 4, expect: "-2+2+0"}, {id: 21, direction: 4, expect: "-3+3+0"},
+		{id: 22, direction: 2, expect: "-3+2+1"}, {id: 23, direction: 2, expect: "-3+1+2"}, {id: 24, direction: 2, expect: "-3+0+3"},
+		{id: 25, direction: 1, expect: "-2-1+3"}, {id: 26, direction: 1, expect: "-1-2+3"}, {id: 27, direction: 1, expect: "+0-3+3"},
+		{id: 28, direction: 0, expect: "+1-3+2"}, {id: 29, direction: 0, expect: "+2-3+1"}, {id: 30, direction: 0, expect: "+3-3+0"},
+		{id: 31, direction: 5, expect: "+3-2-1"}, {id: 32, direction: 5, expect: "+3-1-2"}, {id: 33, direction: 5, expect: "+3+0-3"},
+		{id: 34, direction: 4, expect: "+2+1-3"}, {id: 35, direction: 4, expect: "+1+2-3"}, {id: 36, direction: 4, expect: "+0+3-3"},
+		{id: 37, direction: 3, expect: "-1+3-2"}, {id: 38, direction: 3, expect: "-2+3-1"}, {id: 39, direction: 3, expect: "-3+3+0"},
+	} {
+		to := from.Neighbor(move.direction)
+		if to.ConciseString() != move.expect {
+			t.Fatalf("%d: from %q: to %d: got %q, want %q\n", move.id, from.ConciseString(), move.direction, to.ConciseString(), move.expect)
+		}
+		from = to
+	}
+}
