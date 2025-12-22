@@ -2,10 +2,7 @@
 
 package hexg
 
-import (
-	"fmt"
-	"math"
-)
+import "math"
 
 type Orientation int
 
@@ -114,51 +111,51 @@ func NewLayout(offset LayoutOffset, size, origin Point) Layout {
 			size:   size,
 		}
 	}
-	panic("assert(offset in (OddR, EvenR, OddQ, EvenQ)")
+	panic("invalid offset")
 }
 
-func (layout Layout) IsEven() bool {
-	return layout.offset == EvenQ || layout.offset == EvenR
+func (l *Layout) IsEven() bool {
+	return l.offset == EvenQ || l.offset == EvenR
 }
 
 // IsEvenQ returns true if the layout supports even-q offset coordinates (vertical layout, shoves even columns down).
-func (layout Layout) IsEvenQ() bool {
-	return layout.offset == EvenQ
+func (l *Layout) IsEvenQ() bool {
+	return l.offset == EvenQ
 }
 
 // IsEvenR returns true if the layout supports even-r offset coordinates (horizontal layout, shoves even rows right).
-func (layout Layout) IsEvenR() bool {
-	return layout.offset == EvenR
+func (l *Layout) IsEvenR() bool {
+	return l.offset == EvenR
 }
 
-func (layout Layout) IsFlat() bool {
-	return layout.offset == OddQ || layout.offset == EvenQ
+func (l *Layout) IsFlat() bool {
+	return l.offset == OddQ || l.offset == EvenQ
 }
 
-func (layout Layout) IsHorizontal() bool {
-	return layout.offset == OddR || layout.offset == EvenR
+func (l *Layout) IsHorizontal() bool {
+	return l.offset == OddR || l.offset == EvenR
 }
 
-func (layout Layout) IsOdd() bool {
-	return layout.offset == OddQ || layout.offset == OddR
+func (l *Layout) IsOdd() bool {
+	return l.offset == OddQ || l.offset == OddR
 }
 
 // IsOddQ returns true if the layout supports odd-q offset coordinates (vertical layout, shoves odd columns down).
-func (layout Layout) IsOddQ() bool {
-	return layout.offset == OddQ
+func (l *Layout) IsOddQ() bool {
+	return l.offset == OddQ
 }
 
 // IsOddR returns true if the layout supports odd-r offset coordinates (horizontal layout, shoves odd rows right).
-func (layout Layout) IsOddR() bool {
-	return layout.offset == OddR
+func (l *Layout) IsOddR() bool {
+	return l.offset == OddR
 }
 
-func (layout Layout) IsPointy() bool {
-	return layout.offset == OddR || layout.offset == EvenR
+func (l *Layout) IsPointy() bool {
+	return l.offset == OddR || l.offset == EvenR
 }
 
-func (layout Layout) IsVertical() bool {
-	return layout.offset == OddQ || layout.offset == EvenQ
+func (l *Layout) IsVertical() bool {
+	return l.offset == OddQ || l.offset == EvenQ
 }
 
 // BoundingBox returns the bounding box of a list of hexes.
@@ -204,7 +201,7 @@ func (l *Layout) CubeToOffset(h Hex) OffsetCoord {
 	case EvenQ:
 		return h.CubeToQOffset(true)
 	}
-	panic(fmt.Sprintf("assert(offset != %d)", l.offset))
+	panic("invalid offset")
 }
 
 func (l *Layout) OffsetToCube(oc OffsetCoord) Hex {
@@ -218,7 +215,7 @@ func (l *Layout) OffsetToCube(oc OffsetCoord) Hex {
 	case EvenQ:
 		return oc.QOffsetToCube(true)
 	}
-	panic(fmt.Sprintf("assert(offset != %d)", l.offset))
+	panic("invalid offset")
 }
 
 func (l *Layout) RotateLeft(h Hex) Hex {
@@ -232,7 +229,7 @@ func (l *Layout) RotateLeft(h Hex) Hex {
 	case EvenQ:
 		return h.RotateRight()
 	}
-	panic(fmt.Sprintf("assert(offset != %d)", l.offset))
+	panic("invalid offset")
 }
 
 func (l *Layout) RotateRight(h Hex) Hex {
@@ -246,40 +243,38 @@ func (l *Layout) RotateRight(h Hex) Hex {
 	case EvenQ:
 		return h.RotateLeft()
 	}
-	panic(fmt.Sprintf("assert(offset != %d)", l.offset))
+	panic("invalid offset")
 }
 
 // HexToPixel returns the origin of the hex on the grid as a Point.
-func (layout Layout) HexToPixel(h Hex) Point {
-	M := layout.orientation
-	x := (M.f0*float64(h.q) + M.f1*float64(h.r)) * layout.size.X
-	y := (M.f2*float64(h.q) + M.f3*float64(h.r)) * layout.size.Y
+func (l *Layout) HexToPixel(h Hex) Point {
+	M := l.orientation
+	x := (M.f0*float64(h.q) + M.f1*float64(h.r)) * l.size.X
+	y := (M.f2*float64(h.q) + M.f3*float64(h.r)) * l.size.Y
 	return Point{
-		X: x + layout.origin.X,
-		Y: y + layout.origin.Y,
+		X: x + l.origin.X,
+		Y: y + l.origin.Y,
 	}
 }
 
 // PixelToFractionalHex returns the fractional hex that encloses the pixel.
 // In theory, the origin of that fractional hex will be the pixel.
-func (layout Layout) PixelToFractionalHex(p Point) FractionalHex {
-	M := layout.orientation
+func (l *Layout) PixelToFractionalHex(p Point) FractionalHex {
+	M := l.orientation
 	pt := Point{
-		X: (p.X - layout.origin.X) / layout.size.X,
-		Y: (p.Y - layout.origin.Y) / layout.size.Y,
+		X: (p.X - l.origin.X) / l.size.X,
+		Y: (p.Y - l.origin.Y) / l.size.Y,
 	}
 	q := M.b0*pt.X + M.b1*pt.Y
 	r := M.b2*pt.X + M.b3*pt.Y
 	return FractionalHex{q: q, r: r, s: -q - r}
 }
 
-// To draw a hex, get the center of the hex, then find the corners.
-
 // HexCornerOffset returns the screen location (pixel) of a corner of a hex on the grid.
-func (layout Layout) HexCornerOffset(corner int) Point {
-	size := layout.size
+func (l *Layout) HexCornerOffset(corner int) Point {
+	size := l.size
 	angle := 2.0 * math.Pi *
-		(layout.orientation.start_angle + float64(corner)) / 6
+		(l.orientation.start_angle + float64(corner)) / 6
 	return Point{
 		X: size.X * math.Cos(angle),
 		Y: size.Y * math.Sin(angle),
@@ -287,12 +282,12 @@ func (layout Layout) HexCornerOffset(corner int) Point {
 }
 
 // PolygonCorners returns the location of the six corners of the hex on the grid.
-func (layout Layout) PolygonCorners(h Hex) [6]Point {
+func (l *Layout) PolygonCorners(h Hex) [6]Point {
 	var corners [6]Point
-	center := layout.HexToPixel(h)
+	center := l.HexToPixel(h)
 
 	for i := 0; i < 6; i++ {
-		offset := layout.HexCornerOffset(i)
+		offset := l.HexCornerOffset(i)
 		corners[i] = Point{
 			X: center.X + offset.X,
 			Y: center.Y + offset.Y,
@@ -301,105 +296,99 @@ func (layout Layout) PolygonCorners(h Hex) [6]Point {
 	return corners
 }
 
-// PixelToHexRounded turns a fractional hex into a regular hex coordinate:
-func (layout Layout) PixelToHexRounded(p Point) Hex {
-	return layout.PixelToFractionalHex(p).Round()
+// PixelToHexRounded turns a fractional hex into a regular hex coordinate.
+func (l *Layout) PixelToHexRounded(p Point) Hex {
+	return l.PixelToFractionalHex(p).Round()
 }
 
-func (layout Layout) ParallelogramQR(q1, r1 int, q2, r2 int) HashTable {
-	gs := make(map[uint64]Hex)
+// TODO: Grid builders (Parallelogram*, Triangle*, Hexagon, Rectangle) should
+// use Layout properties in a future update.
+
+func (l *Layout) ParallelogramQR(q1, r1 int, q2, r2 int) HexSet {
+	gs := make(HexSet)
 	for q := q1; q <= q2; q++ {
 		for r := r1; r <= r2; r++ {
-			hex := Hex{q: q, r: r, s: -q - r}
-			gs[hex.Hash()] = hex
+			gs[Hex{q: q, r: r, s: -q - r}] = struct{}{}
 		}
 	}
 	return gs
 }
 
-func (layout Layout) ParallelogramQS(q1, s1 int, q2, s2 int) HashTable {
-	gs := make(map[uint64]Hex)
+func (l *Layout) ParallelogramQS(q1, s1 int, q2, s2 int) HexSet {
+	gs := make(HexSet)
 	for q := q1; q <= q2; q++ {
 		for s := s1; s <= s2; s++ {
-			hex := Hex{q: q, r: -q - s, s: s}
-			gs[hex.Hash()] = hex
+			gs[Hex{q: q, r: -q - s, s: s}] = struct{}{}
 		}
 	}
 	return gs
 }
 
-func (layout Layout) ParallelogramRS(r1, s1 int, r2, s2 int) HashTable {
-	gs := make(map[uint64]Hex)
+func (l *Layout) ParallelogramRS(r1, s1 int, r2, s2 int) HexSet {
+	gs := make(HexSet)
 	for r := r1; r <= r2; r++ {
 		for s := s1; s <= s2; s++ {
-			hex := Hex{q: -r - s, r: r, s: s}
-			gs[hex.Hash()] = hex
+			gs[Hex{q: -r - s, r: r, s: s}] = struct{}{}
 		}
 	}
 	return gs
 }
 
 // TriangleUpDown returns a grid originating at (0,0,0).
-// `map_size` is the length of a side.
-func (layout Layout) TriangleUpDown(map_size int) HashTable {
-	gs := HashTable{}
-	for q := 0; q <= map_size; q++ {
-		for r := 0; r <= map_size-q; r++ {
-			hex := Hex{q: q, r: r, s: -q - r}
-			gs[hex.Hash()] = hex
+// mapSize is the length of a side.
+func (l *Layout) TriangleUpDown(mapSize int) HexSet {
+	gs := make(HexSet)
+	for q := 0; q <= mapSize; q++ {
+		for r := 0; r <= mapSize-q; r++ {
+			gs[Hex{q: q, r: r, s: -q - r}] = struct{}{}
 		}
 	}
 	return gs
 }
 
 // TriangleLeftRight returns a grid originating at (0,0,0).
-// `map_size` is the length of a side.
-func (layout Layout) TriangleLeftRight(map_size int) HashTable {
-	gs := HashTable{}
-	for q := 0; q <= map_size; q++ {
-		for r := map_size - q; r <= map_size; r++ {
-			hex := Hex{q: q, r: r, s: -q - r}
-			gs[hex.Hash()] = hex
+// mapSize is the length of a side.
+func (l *Layout) TriangleLeftRight(mapSize int) HexSet {
+	gs := make(HexSet)
+	for q := 0; q <= mapSize; q++ {
+		for r := mapSize - q; r <= mapSize; r++ {
+			gs[Hex{q: q, r: r, s: -q - r}] = struct{}{}
 		}
 	}
 	return gs
 }
 
 // Hexagon returns a grid centered about (0,0,0).
-// does not depend on the orientation of the grid.
-func (layout Layout) Hexagon(radius int) HashTable {
-	gs := HashTable{}
-	N := radius
-	for q := -N; q <= N; q++ {
-		r1 := max(-N, -q-N)
-		r2 := min(N, -q+N)
+// Does not depend on the orientation of the grid.
+func (l *Layout) Hexagon(radius int) HexSet {
+	gs := make(HexSet)
+	for q := -radius; q <= radius; q++ {
+		r1 := max(-radius, -q-radius)
+		r2 := min(radius, -q+radius)
 		for r := r1; r <= r2; r++ {
-			hex := Hex{q: q, r: r, s: -q - r}
-			gs[hex.Hash()] = hex
+			gs[Hex{q: q, r: r, s: -q - r}] = struct{}{}
 		}
 	}
 	return gs
 }
 
 // Rectangle returns a grid centered about (0,0,0).
-// the internal logic depends on the orientation of the grid.
-func (layout Layout) Rectangle(left, right, top, bottom int) HashTable {
-	gs := HashTable{}
-	if layout.IsPointy() {
+// The internal logic depends on the orientation of the grid.
+func (l *Layout) Rectangle(left, right, top, bottom int) HexSet {
+	gs := make(HexSet)
+	if l.IsPointy() {
 		for r := top; r <= bottom; r++ {
-			r_offset := r >> 1 // or math.Floor(float64(r) / 2.0)
-			for q := left - r_offset; q <= right-r_offset; q++ {
-				hex := Hex{q: q, r: r, s: -q - r}
-				gs[hex.Hash()] = hex
+			rOffset := r >> 1
+			for q := left - rOffset; q <= right-rOffset; q++ {
+				gs[Hex{q: q, r: r, s: -q - r}] = struct{}{}
 			}
 		}
 		return gs
 	}
 	for q := left; q <= right; q++ {
-		q_offset := q >> 1 // or math.Floor(float64(q) / 2.0)
-		for r := top - q_offset; r <= bottom-q_offset; r++ {
-			hex := Hex{q: q, r: r, s: -q - r}
-			gs[hex.Hash()] = hex
+		qOffset := q >> 1
+		for r := top - qOffset; r <= bottom-qOffset; r++ {
+			gs[Hex{q: q, r: r, s: -q - r}] = struct{}{}
 		}
 	}
 	return gs

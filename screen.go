@@ -2,11 +2,14 @@
 
 package hexg
 
-/////////////////////////////////////////////////////////////////////////////
-// pixel to hex
+import "fmt"
 
-// Point represents a screen coordinate
+// Point represents a screen coordinate.
 type Point struct {
 	X float64
 	Y float64
+}
+
+func (p Point) String() string {
+	return fmt.Sprintf("%g,%g", p.X, p.Y)
 }

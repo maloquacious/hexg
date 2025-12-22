@@ -62,17 +62,15 @@ func (h Hex) Distance(b Hex) int {
 	return h.Subtract(b).Length()
 }
 
-var direction_vectors = [6]Hex{
+var directionVectors = [6]Hex{
 	{1, 0, -1}, {1, -1, 0}, {0, -1, 1},
 	{-1, 0, 1}, {-1, 1, 0}, {0, 1, -1},
 }
 
-// DirectionVector returns the vector (q, r, and s offsets) to use
-// based on the direction, which must be in the range 0..5. It will
-// panic of the direction causes an out of bounds on the
-// direction_vectors slice.
+// DirectionVector returns the unit vector for a hex direction.
+// Direction must be in the range 0..5. Panics on invalid input.
 func DirectionVector(direction int) Hex {
-	return direction_vectors[direction]
+	return directionVectors[direction]
 }
 
 // Neighbor returns the hex that is one step away in the given direction.
@@ -91,9 +89,18 @@ func (h Hex) Lerp(b Hex, t float64) FractionalHex {
 	}
 }
 
-// Linedraw returns the set of hexes that are between two hexes.
-// Enable nudging to push points on an edge in a consistent direction.
-func (h Hex) Linedraw(b Hex, withNudge bool) []Hex {
+// LineDraw returns the set of hexes on the line between two hexes.
+func (h Hex) LineDraw(b Hex) []Hex {
+	return h.lineDraw(b, false)
+}
+
+// LineDrawNudged returns the set of hexes on the line between two hexes,
+// with nudging to push points on an edge in a consistent direction.
+func (h Hex) LineDrawNudged(b Hex) []Hex {
+	return h.lineDraw(b, true)
+}
+
+func (h Hex) lineDraw(b Hex, withNudge bool) []Hex {
 	N := h.Distance(b)
 	var results []Hex
 	var step float64
@@ -103,10 +110,10 @@ func (h Hex) Linedraw(b Hex, withNudge bool) []Hex {
 		step = 1.0 / float64(N)
 	}
 	if withNudge {
-		a_nudge := FractionalHex{q: float64(h.q) + 1e-6, r: float64(h.r) + 1e-6, s: float64(h.s) - 2e-6}
-		b_nudge := FractionalHex{q: float64(b.q) + 1e-6, r: float64(b.r) + 1e-6, s: float64(b.s) - 2e-6}
+		aNudge := FractionalHex{q: float64(h.q) + 1e-6, r: float64(h.r) + 1e-6, s: float64(h.s) - 2e-6}
+		bNudge := FractionalHex{q: float64(b.q) + 1e-6, r: float64(b.r) + 1e-6, s: float64(b.s) - 2e-6}
 		for i := 0; i <= N; i++ {
-			results = append(results, a_nudge.Lerp(b_nudge, step*float64(i)).Round())
+			results = append(results, aNudge.Lerp(bNudge, step*float64(i)).Round())
 		}
 		return results
 	}
@@ -116,31 +123,8 @@ func (h Hex) Linedraw(b Hex, withNudge bool) []Hex {
 	return results
 }
 
-// HashTable is a map of Hex indexed by the hash of the Hex.
-type HashTable map[uint64]Hex
-
-// Hash returns a hashable uint64 value derived from the axial
-// coordinates (q, r) using a variation of Boost's hash_combine
-// and MurmurHash3 finalization constants.
-//
-// The s coordinate is omitted because it is redundant in cube
-// coordinates (s = -q - r).
-func (h Hex) Hash() uint64 {
-	const c1 = 0x9E3779B97F4A7C15 // golden ratio
-	const c2 = 0xBF58476D1CE4E5B9
-	const c3 = 0x94D049BB133111EB
-
-	// Casting to int64 before converting to uint64 preserves the signed
-	// bit pattern of negative values, maintaining good distribution
-	// across the entire hex grid, including negative coordinates.
-	q64 := uint64(int64(h.q))
-	r64 := uint64(int64(h.r))
-
-	z := q64 ^ (r64 + c1 + (q64 << 6) + (q64 >> 2))
-	z = (z ^ (z >> 30)) * c2
-	z = (z ^ (z >> 27)) * c3
-	return z ^ (z >> 31)
-}
+// HexSet is a set of hexes.
+type HexSet map[Hex]struct{}
 
 // RotateLeft shifts the q, r, and s coordinates.
 // The effect depends on the layout.

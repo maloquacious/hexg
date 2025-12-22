@@ -5,7 +5,7 @@ package hexg
 import "math"
 
 // NewFractionalHex returns a FractionalHex initialized from cube coordinates.
-func NewFractionalHex(q, r, s float64) FractionalHex { // Axial constructor
+func NewFractionalHex(q, r, s float64) FractionalHex {
 	return FractionalHex{q: q, r: r, s: s}
 }
 
@@ -21,12 +21,12 @@ func (h FractionalHex) Round() Hex {
 	q := int(math.Round(h.q))
 	r := int(math.Round(h.r))
 	s := int(math.Round(h.s))
-	q_diff := math.Abs(float64(q) - h.q)
-	r_diff := math.Abs(float64(r) - h.r)
-	s_diff := math.Abs(float64(s) - h.s)
-	if q_diff > r_diff && q_diff > s_diff {
+	qDiff := math.Abs(float64(q) - h.q)
+	rDiff := math.Abs(float64(r) - h.r)
+	sDiff := math.Abs(float64(s) - h.s)
+	if qDiff > rDiff && qDiff > sDiff {
 		q = -r - s
-	} else if r_diff > s_diff {
+	} else if rDiff > sDiff {
 		r = -q - s
 	} else {
 		s = -q - r

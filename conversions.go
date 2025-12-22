@@ -4,9 +4,6 @@ package hexg
 
 import "fmt"
 
-/////////////////////////////////////////////////////////////////////////////
-// coordinate conversions
-
 // String returns the coordinates formatted as "(q, r, s)".
 func (h Hex) String() string {
 	return fmt.Sprintf("(%d, %d, %d)", h.q, h.r, h.s)
@@ -16,8 +13,4 @@ func (h Hex) String() string {
 // It returns the coordinates formatted as "+q+r+s".
 func (h Hex) ConciseString() string {
 	return fmt.Sprintf("%+d%+d%+d", h.q, h.r, h.s)
-}
-
-func (p Point) String() string {
-	return fmt.Sprintf("%g,%g", p.X, p.Y)
 }
