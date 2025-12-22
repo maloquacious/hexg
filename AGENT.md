@@ -19,3 +19,7 @@ We use "grid" instead of "map" because map is a reserved word in Go.
 - Function comments use Go standard format `// FunctionName does X`
 - Variable naming follows camelCase
 - File structure follows standard Go package conventions
+
+## Notes
+The `cube` folder contains an older version of the code.
+We need to ensure that all the functions in that folder are included in the root before releasing v1 of our package.

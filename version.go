@@ -4,9 +4,15 @@ package hexg
 
 import "github.com/maloquacious/semver"
 
-func Version() semver.Version {
-	return semver.Version{
-		Minor: 13,
+var (
+	version = semver.Version{
+		Major: 0,
+		Minor: 14,
 		Patch: 1,
+		Build: semver.Commit(),
 	}
+)
+
+func Version() semver.Version {
+	return version
 }

@@ -2,6 +2,12 @@
 
 package hexg
 
+import "math"
+
+/////////////////////////////////////////////////////////////////////////////
+// helpers for math
+//
+
 // number is a constraint that permits any integer or floating-point type.
 type number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
@@ -15,4 +21,16 @@ func abs[T number](x T) T {
 		return -x
 	}
 	return x
+}
+
+// lerp is a generic linear interpolation function.
+// Accepts any integer or floating-point for a and b, always returns float64.
+func lerp[T number](a, b T, t float64) float64 {
+	// better for floating point precision than a + (b - a) * t
+	return float64(a) + (float64(b)-float64(a))*t
+}
+
+// round is a helper function to round float64 to int.
+func round(f float64) int {
+	return int(math.Round(f))
 }

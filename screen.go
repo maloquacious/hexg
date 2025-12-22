@@ -1,8 +1,12 @@
 // Copyright (c) 2025 Michael D Henderson. All rights reserved.
 
-package cube
+package hexg
 
 /////////////////////////////////////////////////////////////////////////////
-// coordinate conversions
-// * https://www.redblobgames.com/grids/hexagons/#conversions
-// todo: implement this
+// pixel to hex
+
+// Point represents a screen coordinate
+type Point struct {
+	X float64
+	Y float64
+}
