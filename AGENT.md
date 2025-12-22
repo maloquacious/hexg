@@ -22,10 +22,21 @@ We use "grid" instead of "map" because map is a reserved word in Go.
 
 ## V1 Release Plan
 
-### Phase 6: Final
-- [ ] Implement cmd/examples (https://www.redblobgames.com/grids/hexagons/implementation.html#layout-examples)
+### Phase 5: Cube Folder Migration (COMPLETE - v0.15.0)
+Migrated unique functionality from cube/ to root:
+- [x] DiagonalDirectionVector(), DiagonalNeighbor() → hex.go
+- [x] ReflectQ/R/S() → hex.go, fractional.go
+- [x] Scale(), Ring(), Spiral() → hex.go
+- [x] FractionalHex.Scale() → fractional.go
+- [x] Deleted cube/ folder (stub files had no implementation)
+
+### Phase 6: Implement cmd/examples (COMPLETE - v0.15.1)
+- [x] Image generator with flags for orientation, size, origin
+- [x] Art-sprite flag for art-friendly sizing (w/2, h/√3 or w/√3, h/2)
+- [x] Render hex coordinates (q,r,s) on each hex
+- [x] Output to PNG file
 
 ### Phase 7: Final
-- [ ] Run `go test ./...` and ensure all pass
-- [ ] Run `go fmt ./...`
+- [x] Run `go test ./...` and ensure all pass
+- [x] Run `go fmt ./...`
 - [ ] Tag v1.0.0
