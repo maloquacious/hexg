@@ -22,7 +22,7 @@ const (
 type orientation struct {
 	f0, f1, f2, f3 float64
 	b0, b1, b2, b3 float64
-	start_angle    float64 // in multiples of 60°
+	startAngle     float64 // in multiples of 60°
 }
 
 // Layout implements the conversion between hex (q,r,s) and screen (x,y)
@@ -58,7 +58,7 @@ func NewLayout(offset LayoutOffset, size, origin Point) Layout {
 			orientation: orientation{
 				f0: math.Sqrt(3.0), f1: math.Sqrt(3.0) / 2.0, f2: 0.0, f3: 3.0 / 2.0,
 				b0: math.Sqrt(3.0) / 3.0, b1: -1.0 / 3.0, b2: 0.0, b3: 2.0 / 3.0,
-				start_angle: 0.5,
+				startAngle: 0.5,
 			},
 			origin: origin,
 			size:   size,
@@ -69,7 +69,7 @@ func NewLayout(offset LayoutOffset, size, origin Point) Layout {
 			orientation: orientation{
 				f0: math.Sqrt(3.0), f1: math.Sqrt(3.0) / 2.0, f2: 0.0, f3: 3.0 / 2.0,
 				b0: math.Sqrt(3.0) / 3.0, b1: -1.0 / 3.0, b2: 0.0, b3: 2.0 / 3.0,
-				start_angle: 0.5,
+				startAngle: 0.5,
 			},
 			origin: origin,
 			size:   size,
@@ -80,7 +80,7 @@ func NewLayout(offset LayoutOffset, size, origin Point) Layout {
 			orientation: orientation{
 				f0: 3.0 / 2.0, f1: 0.0, f2: math.Sqrt(3.0) / 2.0, f3: math.Sqrt(3.0),
 				b0: 2.0 / 3.0, b1: 0.0, b2: -1.0 / 3.0, b3: math.Sqrt(3.0) / 3.0,
-				start_angle: 0.0,
+				startAngle: 0.0,
 			},
 			origin: origin,
 			size:   size,
@@ -91,7 +91,7 @@ func NewLayout(offset LayoutOffset, size, origin Point) Layout {
 			orientation: orientation{
 				f0: 3.0 / 2.0, f1: 0.0, f2: math.Sqrt(3.0) / 2.0, f3: math.Sqrt(3.0),
 				b0: 2.0 / 3.0, b1: 0.0, b2: -1.0 / 3.0, b3: math.Sqrt(3.0) / 3.0,
-				start_angle: 0.0,
+				startAngle: 0.0,
 			},
 			origin: origin,
 			size:   size,
@@ -272,7 +272,7 @@ func (l *Layout) PixelToFractionalHex(p Point) FractionalHex {
 func (l *Layout) HexCornerOffset(corner int) Point {
 	size := l.size
 	angle := 2.0 * math.Pi *
-		(l.orientation.start_angle + float64(corner)) / 6
+		(l.orientation.startAngle + float64(corner)) / 6
 	return Point{
 		X: size.X * math.Cos(angle),
 		Y: size.Y * math.Sin(angle),

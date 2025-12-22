@@ -42,6 +42,16 @@ dist := a.Distance(b)
 
 // Neighbors (direction 0-5)
 neighbor := a.Neighbor(0)
+
+// Diagonal neighbors (direction 0-5)
+diagonal := a.DiagonalNeighbor(0)
+
+// Reflections across axes
+reflected := a.ReflectQ() // also ReflectR(), ReflectS()
+
+// Rotations (60° increments)
+left := a.RotateLeft()
+right := a.RotateRight()
 ```
 
 ### Drawing Lines
@@ -93,6 +103,13 @@ rectGrid := layout.Rectangle(0, 10, 0, 8)
 // Triangle grids
 triUp := layout.TriangleUpDown(5)
 triLR := layout.TriangleLeftRight(5)
+
+// Ring of hexes at radius 3 from center
+center := hexg.NewHex(0, 0)
+ring := center.Ring(3)
+
+// Spiral outward from center (all hexes within radius)
+spiral := center.Spiral(3)
 ```
 
 ### Offset Coordinates
