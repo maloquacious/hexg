@@ -137,3 +137,77 @@ func (h Hex) RotateLeft() Hex {
 func (h Hex) RotateRight() Hex {
 	return Hex{q: -h.r, r: -h.s, s: -h.q}
 }
+
+var diagonalDirectionVectors = [6]Hex{
+	{2, -1, -1}, {1, -2, 1}, {-1, -1, 2},
+	{-2, 1, 1}, {-1, 2, -1}, {1, 1, -2},
+}
+
+// DiagonalDirectionVector returns the unit vector for a diagonal hex direction.
+// Direction is coerced to the range 0..5.
+func DiagonalDirectionVector(direction int) Hex {
+	direction = (6 + (direction % 6)) % 6
+	return diagonalDirectionVectors[direction]
+}
+
+// DiagonalNeighbor returns the hex that is one diagonal step away in the given direction.
+// Direction is coerced to the range 0..5.
+func (h Hex) DiagonalNeighbor(direction int) Hex {
+	return h.Add(DiagonalDirectionVector(direction))
+}
+
+// ReflectQ reflects the hex across the Q axis.
+func (h Hex) ReflectQ() Hex {
+	return Hex{q: h.q, r: h.s, s: h.r}
+}
+
+// ReflectR reflects the hex across the R axis.
+func (h Hex) ReflectR() Hex {
+	return Hex{q: h.s, r: h.r, s: h.q}
+}
+
+// ReflectS reflects the hex across the S axis.
+func (h Hex) ReflectS() Hex {
+	return Hex{q: h.r, r: h.q, s: h.s}
+}
+
+// Scale returns a Hex scaled by an integer factor.
+// This is an alias for Multiply for API consistency.
+func (h Hex) Scale(factor int) Hex {
+	return h.Multiply(factor)
+}
+
+// Ring returns all hexes at exactly the given radius from the center hex.
+// Returns a single-element slice containing the center if radius is 0.
+// Panics if radius is negative.
+func (h Hex) Ring(radius int) []Hex {
+	if radius < 0 {
+		panic("radius must be non-negative")
+	}
+	if radius == 0 {
+		return []Hex{h}
+	}
+	results := make([]Hex, 0, 6*radius)
+	hex := h.Add(DirectionVector(4).Multiply(radius))
+	for i := 0; i < 6; i++ {
+		for j := 0; j < radius; j++ {
+			results = append(results, hex)
+			hex = hex.Neighbor(i)
+		}
+	}
+	return results
+}
+
+// Spiral returns all hexes within the given radius from the center hex,
+// starting from the center and spiraling outward.
+// Panics if radius is negative.
+func (h Hex) Spiral(radius int) []Hex {
+	if radius < 0 {
+		panic("radius must be non-negative")
+	}
+	results := []Hex{h}
+	for k := 1; k <= radius; k++ {
+		results = append(results, h.Ring(k)...)
+	}
+	return results
+}

@@ -22,30 +22,10 @@ We use "grid" instead of "map" because map is a reserved word in Go.
 
 ## V1 Release Plan
 
-### Phase 5: Cube Folder Migration
-Migrate all unique functionality from cube/ to root:
-- [ ] coords.go
-- [ ] distances.go (+ tests)
-- [ ] field_of_view.go
-- [ ] geometry.go
-- [ ] hex_to_pixel.go
-- [ ] lines.go
-- [ ] math.go
-- [ ] movement.go
-- [ ] neighbors.go (+ tests)
-- [ ] paths.go
-- [ ] pixel_to_hex.go
-- [ ] references.go
-- [ ] reflection.go
-- [ ] rings.go
-- [ ] rotation.go
-- [ ] rounding.go
-- [ ] storage.go
-- [ ] strings.go
-- [ ] wrapping.go
-
 ### Phase 6: Final
+- [ ] Implement cmd/examples (https://www.redblobgames.com/grids/hexagons/implementation.html#layout-examples)
+
+### Phase 7: Final
 - [ ] Run `go test ./...` and ensure all pass
 - [ ] Run `go fmt ./...`
-- [ ] Remove cube/ folder after migration complete
 - [ ] Tag v1.0.0
