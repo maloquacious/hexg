@@ -1,3 +1,7 @@
+*~
+*.exe
+*.png
 .idea/
 .vscode/
 dist/
+/example

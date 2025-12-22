@@ -8,6 +8,7 @@ Package is written in Go and uses the stdlib.
 We use "grid" instead of "map" because map is a reserved word in Go.
 
 ## Commands
+- Run example: go run ./cmd/example -o testdata/hexgrid.png
 - Tests: `go test ./...`
 - Run single test: `go test -v ./path/to/package -run TestName`
 - Format code: `go fmt ./...`

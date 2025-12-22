@@ -24,7 +24,7 @@ func main() {
 		originY     = flag.Float64("origin-y", 200, "origin Y coordinate")
 		artSprite   = flag.Bool("art-sprite", false, "use art-friendly sprite sizing")
 		radius      = flag.Int("radius", 2, "hex grid radius")
-		output      = flag.String("output", "hexgrid.png", "output filename")
+		output      = flag.String("output", "testdata/hexgrid.png", "output filename")
 	)
 	flag.Parse()
 
