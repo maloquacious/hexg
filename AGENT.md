@@ -22,15 +22,6 @@ We use "grid" instead of "map" because map is a reserved word in Go.
 
 ## V1 Release Plan
 
-### Phase 4: README
-- [ ] Create README.md with:
-  - Package overview and purpose
-  - Installation instructions
-  - Basic usage examples
-  - Link to Red Blob Games hexagon guide
-  - Acknowledgements section (Red Blob Games, Amp)
-  - License info
-
 ### Phase 5: Cube Folder Migration
 Migrate all unique functionality from cube/ to root:
 - [ ] coords.go
