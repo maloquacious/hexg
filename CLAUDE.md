@@ -96,7 +96,9 @@ sum-zero invariant on parse. `String()` (`"(q, r, s)"`) is for humans only; don'
   Direction arguments are mostly coerced into 0..5 (`Neighbor`, `DiagonalNeighbor`,
   `DiagonalDirectionVector`); the exception is `DirectionVector`, which indexes directly
   and panics. Keep that split.
-- `version.go` holds the package version and is bumped as part of a release commit
-  (commit messages carry the version, e.g. `Release v1.0.0`).
+- `version.go` holds the package version. **Bump it in every change that touches code**
+  — patch for a bug fix, minor for new API, major for a break. Documentation-only
+  changes (README, CLAUDE.md, AGENT.md, comments) do not get a bump. Release commit
+  messages carry the version, e.g. `Release v1.0.0`.
 - Generated PNGs are gitignored (`*.png`), so `testdata/` images are not committed by
   default.
