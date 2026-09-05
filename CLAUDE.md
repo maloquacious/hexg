@@ -100,5 +100,10 @@ sum-zero invariant on parse. `String()` (`"(q, r, s)"`) is for humans only; don'
   — patch for a bug fix, minor for new API, major for a break. Documentation-only
   changes (README, CLAUDE.md, AGENT.md, comments) do not get a bump. Release commit
   messages carry the version, e.g. `Release v1.0.0`.
+- **Every version bump gets a git tag, pushed right after the merge lands.**
+  Tag the commit on `main` that carries the bump (for a squash-merged PR, that is
+  the squash commit), using a lightweight tag named `v<major>.<minor>.<patch>`:
+  `git tag v1.1.0 <sha> && git push origin v1.1.0`. Without the tag the release is
+  invisible to `go get`, and the bumped version ships silently inside a later one.
 - Generated PNGs are gitignored (`*.png`), so `testdata/` images are not committed by
   default.
