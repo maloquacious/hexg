@@ -112,6 +112,19 @@ ring := center.Ring(3)
 spiral := center.Spiral(3)
 ```
 
+The generators return a `HexSet`, which is a map, so ranging one visits hexes in
+a different order every run. Use `Sorted` when the order matters:
+
+```go
+// Deterministic order: by r, then q (row-major for pointy-top layouts)
+for _, h := range layout.Hexagon(3).Sorted() {
+	fmt.Println(h.ConciseString())
+}
+
+// The same ordering, for sorting a slice yourself
+slices.SortFunc(hexes, hexg.Hex.Compare)
+```
+
 ### Offset Coordinates
 
 ```go
