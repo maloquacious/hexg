@@ -370,23 +370,16 @@ func (l *Layout) Hexagon(radius int) HexSet {
 	return gs
 }
 
-// Rectangle returns a grid centered about (0,0,0).
-// The internal logic depends on the orientation of the grid.
+// Rectangle returns a grid covering the offset coordinates
+// left..right by top..bottom, inclusive.
+// The rectangle is built in the layout's own offset space, so converting the
+// result back with CubeToOffset yields exactly columns left..right on every
+// row from top to bottom.
 func (l *Layout) Rectangle(left, right, top, bottom int) HexSet {
 	gs := make(HexSet)
-	if l.IsPointy() {
-		for r := top; r <= bottom; r++ {
-			rOffset := r >> 1
-			for q := left - rOffset; q <= right-rOffset; q++ {
-				gs[Hex{q: q, r: r, s: -q - r}] = struct{}{}
-			}
-		}
-		return gs
-	}
-	for q := left; q <= right; q++ {
-		qOffset := q >> 1
-		for r := top - qOffset; r <= bottom-qOffset; r++ {
-			gs[Hex{q: q, r: r, s: -q - r}] = struct{}{}
+	for row := top; row <= bottom; row++ {
+		for col := left; col <= right; col++ {
+			gs[l.OffsetToCube(OffsetCoord{Col: col, Row: row})] = struct{}{}
 		}
 	}
 	return gs
