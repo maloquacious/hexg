@@ -5,6 +5,8 @@
 // https://www.redblobgames.com/grids/hexagons/implementation.html.
 package hexg
 
+import "slices"
+
 // NewHex returns a Hex initialized from axial coordinates.
 func NewHex(q, r int) Hex { // Axial constructor
 	return Hex{q: q, r: r, s: -q - r}
@@ -35,6 +37,35 @@ func (h Hex) Equals(b Hex) bool {
 // NotEquals returns true if the two hexes have different coordinates.
 func (h Hex) NotEquals(b Hex) bool {
 	return !h.Equals(b)
+}
+
+// Compare orders hexes by r, then q. It returns -1 if h sorts before b,
+// +1 if h sorts after b, and 0 if they are the same hex.
+//
+// The order is row-major for pointy-top layouts (r is the row) and matches the
+// natural index of a dense array, so it is the order to reach for when pinning
+// golden vectors. It is part of the API: it will not change.
+//
+// s needs no tie-break because it is derived from q and r, so (r, q) is
+// already a total order on Hex.
+//
+// The signature fits slices.SortFunc and cmp.Compare directly:
+//
+//	slices.SortFunc(hexes, Hex.Compare)
+func (h Hex) Compare(b Hex) int {
+	if h.r != b.r {
+		if h.r < b.r {
+			return -1
+		}
+		return +1
+	}
+	if h.q != b.q {
+		if h.q < b.q {
+			return -1
+		}
+		return +1
+	}
+	return 0
 }
 
 // Add returns the sum of two hexes.
@@ -125,6 +156,22 @@ func (h Hex) lineDraw(b Hex, withNudge bool) []Hex {
 
 // HexSet is a set of hexes.
 type HexSet map[Hex]struct{}
+
+// Sorted returns the set's hexes in Compare order: by r, then q.
+//
+// Go randomizes map iteration, so ranging a HexSet directly gives a different
+// order every run. Sorted is the deterministic alternative, for callers whose
+// results depend on the order they visit hexes in.
+//
+// The result is a fresh slice, empty and non-nil for an empty or nil set.
+func (s HexSet) Sorted() []Hex {
+	hexes := make([]Hex, 0, len(s))
+	for h := range s {
+		hexes = append(hexes, h)
+	}
+	slices.SortFunc(hexes, Hex.Compare)
+	return hexes
+}
 
 // RotateLeft shifts the q, r, and s coordinates.
 // The effect depends on the layout.
