@@ -101,58 +101,58 @@ func NewLayout(offset LayoutOffset, size, origin Point) Layout {
 }
 
 // IsEven returns true if the layout uses even offset coordinates.
-func (l *Layout) IsEven() bool {
+func (l Layout) IsEven() bool {
 	return l.offset == EvenQ || l.offset == EvenR
 }
 
 // IsEvenQ returns true if the layout supports even-q offset coordinates (vertical layout, shoves even columns down).
-func (l *Layout) IsEvenQ() bool {
+func (l Layout) IsEvenQ() bool {
 	return l.offset == EvenQ
 }
 
 // IsEvenR returns true if the layout supports even-r offset coordinates (horizontal layout, shoves even rows right).
-func (l *Layout) IsEvenR() bool {
+func (l Layout) IsEvenR() bool {
 	return l.offset == EvenR
 }
 
 // IsFlat returns true if the layout uses flat-top hexes.
-func (l *Layout) IsFlat() bool {
+func (l Layout) IsFlat() bool {
 	return l.offset == OddQ || l.offset == EvenQ
 }
 
 // IsHorizontal returns true if the layout has horizontal rows.
-func (l *Layout) IsHorizontal() bool {
+func (l Layout) IsHorizontal() bool {
 	return l.offset == OddR || l.offset == EvenR
 }
 
 // IsOdd returns true if the layout uses odd offset coordinates.
-func (l *Layout) IsOdd() bool {
+func (l Layout) IsOdd() bool {
 	return l.offset == OddQ || l.offset == OddR
 }
 
 // IsOddQ returns true if the layout supports odd-q offset coordinates (vertical layout, shoves odd columns down).
-func (l *Layout) IsOddQ() bool {
+func (l Layout) IsOddQ() bool {
 	return l.offset == OddQ
 }
 
 // IsOddR returns true if the layout supports odd-r offset coordinates (horizontal layout, shoves odd rows right).
-func (l *Layout) IsOddR() bool {
+func (l Layout) IsOddR() bool {
 	return l.offset == OddR
 }
 
 // IsPointy returns true if the layout uses pointy-top hexes.
-func (l *Layout) IsPointy() bool {
+func (l Layout) IsPointy() bool {
 	return l.offset == OddR || l.offset == EvenR
 }
 
 // IsVertical returns true if the layout has vertical columns.
-func (l *Layout) IsVertical() bool {
+func (l Layout) IsVertical() bool {
 	return l.offset == OddQ || l.offset == EvenQ
 }
 
 // BoundingBox returns the bounding box of a list of hexes.
 // If the list is empty, returns (0,0,0), (0,0,0)
-func (l *Layout) BoundingBox(hexes ...Hex) (upperLeft, lowerRight Hex) {
+func (l Layout) BoundingBox(hexes ...Hex) (upperLeft, lowerRight Hex) {
 	if len(hexes) == 0 {
 		return Hex{}, Hex{}
 	}
@@ -183,7 +183,7 @@ func (l *Layout) BoundingBox(hexes ...Hex) (upperLeft, lowerRight Hex) {
 }
 
 // CubeToOffset converts cube coordinates to offset coordinates based on the layout.
-func (l *Layout) CubeToOffset(h Hex) OffsetCoord {
+func (l Layout) CubeToOffset(h Hex) OffsetCoord {
 	switch l.offset {
 	case OddR:
 		return h.CubeToROffset(false)
@@ -198,7 +198,7 @@ func (l *Layout) CubeToOffset(h Hex) OffsetCoord {
 }
 
 // OffsetToCube converts offset coordinates to cube coordinates based on the layout.
-func (l *Layout) OffsetToCube(oc OffsetCoord) Hex {
+func (l Layout) OffsetToCube(oc OffsetCoord) Hex {
 	switch l.offset {
 	case OddR:
 		return oc.ROffsetToCube(false)
@@ -214,7 +214,7 @@ func (l *Layout) OffsetToCube(oc OffsetCoord) Hex {
 
 // RotateLeft rotates the hex 60° counter-clockwise around the origin.
 // The underlying operation depends on the layout orientation.
-func (l *Layout) RotateLeft(h Hex) Hex {
+func (l Layout) RotateLeft(h Hex) Hex {
 	switch l.offset {
 	case OddR:
 		return h.RotateLeft()
@@ -230,7 +230,7 @@ func (l *Layout) RotateLeft(h Hex) Hex {
 
 // RotateRight rotates the hex 60° clockwise around the origin.
 // The underlying operation depends on the layout orientation.
-func (l *Layout) RotateRight(h Hex) Hex {
+func (l Layout) RotateRight(h Hex) Hex {
 	switch l.offset {
 	case OddR:
 		return h.RotateRight()
@@ -245,7 +245,7 @@ func (l *Layout) RotateRight(h Hex) Hex {
 }
 
 // HexToPixel returns the origin of the hex on the grid as a Point.
-func (l *Layout) HexToPixel(h Hex) Point {
+func (l Layout) HexToPixel(h Hex) Point {
 	M := l.orientation
 	x := (M.f0*float64(h.q) + M.f1*float64(h.r)) * l.size.X
 	y := (M.f2*float64(h.q) + M.f3*float64(h.r)) * l.size.Y
@@ -257,7 +257,7 @@ func (l *Layout) HexToPixel(h Hex) Point {
 
 // PixelToFractionalHex returns the fractional hex that encloses the pixel.
 // In theory, the origin of that fractional hex will be the pixel.
-func (l *Layout) PixelToFractionalHex(p Point) FractionalHex {
+func (l Layout) PixelToFractionalHex(p Point) FractionalHex {
 	M := l.orientation
 	pt := Point{
 		X: (p.X - l.origin.X) / l.size.X,
@@ -269,7 +269,7 @@ func (l *Layout) PixelToFractionalHex(p Point) FractionalHex {
 }
 
 // HexCornerOffset returns the screen location (pixel) of a corner of a hex on the grid.
-func (l *Layout) HexCornerOffset(corner int) Point {
+func (l Layout) HexCornerOffset(corner int) Point {
 	size := l.size
 	angle := 2.0 * math.Pi *
 		(l.orientation.startAngle + float64(corner)) / 6
@@ -280,7 +280,7 @@ func (l *Layout) HexCornerOffset(corner int) Point {
 }
 
 // PolygonCorners returns the location of the six corners of the hex on the grid.
-func (l *Layout) PolygonCorners(h Hex) [6]Point {
+func (l Layout) PolygonCorners(h Hex) [6]Point {
 	var corners [6]Point
 	center := l.HexToPixel(h)
 
@@ -295,12 +295,12 @@ func (l *Layout) PolygonCorners(h Hex) [6]Point {
 }
 
 // PixelToHexRounded converts a screen pixel to the nearest hex coordinate.
-func (l *Layout) PixelToHexRounded(p Point) Hex {
+func (l Layout) PixelToHexRounded(p Point) Hex {
 	return l.PixelToFractionalHex(p).Round()
 }
 
 // ParallelogramQR returns a parallelogram-shaped grid using q and r axes.
-func (l *Layout) ParallelogramQR(q1, r1 int, q2, r2 int) HexSet {
+func (l Layout) ParallelogramQR(q1, r1 int, q2, r2 int) HexSet {
 	gs := make(HexSet)
 	for q := q1; q <= q2; q++ {
 		for r := r1; r <= r2; r++ {
@@ -311,7 +311,7 @@ func (l *Layout) ParallelogramQR(q1, r1 int, q2, r2 int) HexSet {
 }
 
 // ParallelogramQS returns a parallelogram-shaped grid using q and s axes.
-func (l *Layout) ParallelogramQS(q1, s1 int, q2, s2 int) HexSet {
+func (l Layout) ParallelogramQS(q1, s1 int, q2, s2 int) HexSet {
 	gs := make(HexSet)
 	for q := q1; q <= q2; q++ {
 		for s := s1; s <= s2; s++ {
@@ -322,7 +322,7 @@ func (l *Layout) ParallelogramQS(q1, s1 int, q2, s2 int) HexSet {
 }
 
 // ParallelogramRS returns a parallelogram-shaped grid using r and s axes.
-func (l *Layout) ParallelogramRS(r1, s1 int, r2, s2 int) HexSet {
+func (l Layout) ParallelogramRS(r1, s1 int, r2, s2 int) HexSet {
 	gs := make(HexSet)
 	for r := r1; r <= r2; r++ {
 		for s := s1; s <= s2; s++ {
@@ -334,7 +334,7 @@ func (l *Layout) ParallelogramRS(r1, s1 int, r2, s2 int) HexSet {
 
 // TriangleUpDown returns a grid originating at (0,0,0).
 // mapSize is the length of a side.
-func (l *Layout) TriangleUpDown(mapSize int) HexSet {
+func (l Layout) TriangleUpDown(mapSize int) HexSet {
 	gs := make(HexSet)
 	for q := 0; q <= mapSize; q++ {
 		for r := 0; r <= mapSize-q; r++ {
@@ -346,7 +346,7 @@ func (l *Layout) TriangleUpDown(mapSize int) HexSet {
 
 // TriangleLeftRight returns a grid originating at (0,0,0).
 // mapSize is the length of a side.
-func (l *Layout) TriangleLeftRight(mapSize int) HexSet {
+func (l Layout) TriangleLeftRight(mapSize int) HexSet {
 	gs := make(HexSet)
 	for q := 0; q <= mapSize; q++ {
 		for r := mapSize - q; r <= mapSize; r++ {
@@ -358,7 +358,7 @@ func (l *Layout) TriangleLeftRight(mapSize int) HexSet {
 
 // Hexagon returns a grid centered about (0,0,0).
 // Does not depend on the orientation of the grid.
-func (l *Layout) Hexagon(radius int) HexSet {
+func (l Layout) Hexagon(radius int) HexSet {
 	gs := make(HexSet)
 	for q := -radius; q <= radius; q++ {
 		r1 := max(-radius, -q-radius)
@@ -375,7 +375,7 @@ func (l *Layout) Hexagon(radius int) HexSet {
 // The rectangle is built in the layout's own offset space, so converting the
 // result back with CubeToOffset yields exactly columns left..right on every
 // row from top to bottom.
-func (l *Layout) Rectangle(left, right, top, bottom int) HexSet {
+func (l Layout) Rectangle(left, right, top, bottom int) HexSet {
 	gs := make(HexSet)
 	for row := top; row <= bottom; row++ {
 		for col := left; col <= right; col++ {
