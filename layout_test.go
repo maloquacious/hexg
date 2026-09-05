@@ -346,3 +346,52 @@ func TestLayout_IsHorizontalVertical(t *testing.T) {
 		t.Error("OddQ should be vertical, not horizontal")
 	}
 }
+
+// TestLayout_ValueReceivers pins the value-receiver method set: a Layout must be
+// usable in unaddressable positions - the result of NewLayout, a map value, a
+// by-value parameter - without the caller binding it to a variable first.
+// These calls do not compile against pointer receivers.
+func TestLayout_ValueReceivers(t *testing.T) {
+	size := hexg.Point{X: 10, Y: 10}
+	origin := hexg.Point{X: 0, Y: 0}
+	hex := hexg.NewHex(1, -2)
+
+	layouts := map[hexg.LayoutOffset]hexg.Layout{
+		hexg.OddR:  hexg.NewLayout(hexg.OddR, size, origin),
+		hexg.EvenR: hexg.NewLayout(hexg.EvenR, size, origin),
+		hexg.OddQ:  hexg.NewLayout(hexg.OddQ, size, origin),
+		hexg.EvenQ: hexg.NewLayout(hexg.EvenQ, size, origin),
+	}
+
+	byValue := func(l hexg.Layout) hexg.Point { return l.HexToPixel(hex) }
+
+	for _, tc := range []struct {
+		id     int
+		offset hexg.LayoutOffset
+	}{
+		{1, hexg.OddR},
+		{2, hexg.EvenR},
+		{3, hexg.OddQ},
+		{4, hexg.EvenQ},
+	} {
+		layout := hexg.NewLayout(tc.offset, size, origin)
+		want := layout.HexToPixel(hex)
+
+		// method call directly on the constructor's return value
+		if got := hexg.NewLayout(tc.offset, size, origin).HexToPixel(hex); want != got {
+			t.Errorf("%d: constructor: want %v, got %v", tc.id, want, got)
+		}
+		// method call on an unaddressable map value
+		if got := layouts[tc.offset].HexToPixel(hex); want != got {
+			t.Errorf("%d: map value: want %v, got %v", tc.id, want, got)
+		}
+		// Layout passed by value
+		if got := byValue(layout); want != got {
+			t.Errorf("%d: by value: want %v, got %v", tc.id, want, got)
+		}
+		// pointers keep working: a *Layout can call a value method
+		if got := (&layout).HexToPixel(hex); want != got {
+			t.Errorf("%d: pointer: want %v, got %v", tc.id, want, got)
+		}
+	}
+}

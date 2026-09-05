@@ -7,8 +7,8 @@ import "github.com/maloquacious/semver"
 var (
 	version = semver.Version{
 		Major: 1,
-		Minor: 0,
-		Patch: 2,
+		Minor: 1,
+		Patch: 0,
 		Build: semver.Commit(),
 	}
 )
