@@ -221,6 +221,58 @@ func TestLayout_Rectangle(t *testing.T) {
 	}
 }
 
+func TestLayout_Rectangle_OffsetRoundTrip(t *testing.T) {
+	for _, tc := range []struct {
+		id                       int
+		offset                   hexg.LayoutOffset
+		name                     string
+		left, right, top, bottom int
+	}{
+		{id: 1, offset: hexg.OddR, name: "OddR", left: 0, right: 4, top: 0, bottom: 3},
+		{id: 2, offset: hexg.EvenR, name: "EvenR", left: 0, right: 4, top: 0, bottom: 3},
+		{id: 3, offset: hexg.OddQ, name: "OddQ", left: 0, right: 4, top: 0, bottom: 3},
+		{id: 4, offset: hexg.EvenQ, name: "EvenQ", left: 0, right: 4, top: 0, bottom: 3},
+		{id: 5, offset: hexg.OddR, name: "OddR", left: -3, right: 2, top: -2, bottom: 1},
+		{id: 6, offset: hexg.EvenR, name: "EvenR", left: -3, right: 2, top: -2, bottom: 1},
+		{id: 7, offset: hexg.OddQ, name: "OddQ", left: -3, right: 2, top: -2, bottom: 1},
+		{id: 8, offset: hexg.EvenQ, name: "EvenQ", left: -3, right: 2, top: -2, bottom: 1},
+		{id: 9, offset: hexg.EvenR, name: "EvenR", left: 1, right: 1, top: 1, bottom: 1},
+		{id: 10, offset: hexg.EvenQ, name: "EvenQ", left: 1, right: 1, top: 1, bottom: 1},
+	} {
+		layout := hexg.NewLayout(tc.offset, hexg.Point{X: 10, Y: 10}, hexg.Point{X: 0, Y: 0})
+		gs := layout.Rectangle(tc.left, tc.right, tc.top, tc.bottom)
+
+		cols := tc.right - tc.left + 1
+		rows := tc.bottom - tc.top + 1
+		if want, got := cols*rows, len(gs); want != got {
+			t.Errorf("%d: %s: count: want %d, got %d\n", tc.id, tc.name, want, got)
+		}
+
+		// every hex must land in the requested offset window, and every
+		// cell of that window must be occupied exactly once.
+		seen := make(map[hexg.OffsetCoord]bool)
+		for h := range gs {
+			oc := layout.CubeToOffset(h)
+			if oc.Col < tc.left || oc.Col > tc.right || oc.Row < tc.top || oc.Row > tc.bottom {
+				t.Errorf("%d: %s: %s is outside col %d..%d, row %d..%d\n",
+					tc.id, tc.name, oc, tc.left, tc.right, tc.top, tc.bottom)
+				continue
+			}
+			if seen[oc] {
+				t.Errorf("%d: %s: %s occupied twice\n", tc.id, tc.name, oc)
+			}
+			seen[oc] = true
+		}
+		for row := tc.top; row <= tc.bottom; row++ {
+			for col := tc.left; col <= tc.right; col++ {
+				if oc := hexg.NewOffsetCoord(col, row); !seen[oc] {
+					t.Errorf("%d: %s: %s missing\n", tc.id, tc.name, oc)
+				}
+			}
+		}
+	}
+}
+
 func TestLayout_TriangleUpDown(t *testing.T) {
 	size := hexg.Point{X: 10, Y: 10}
 	origin := hexg.Point{X: 0, Y: 0}
