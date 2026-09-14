@@ -61,6 +61,22 @@ func TestHex_Distance(t *testing.T) {
 	}
 }
 
+func TestHex_LengthAndDistanceAtCoordinateBoundary(t *testing.T) {
+	maxInt := int(^uint(0) >> 1)
+	bound := maxInt / 2
+	a := hexg.NewHex(bound, 0)
+	b := hexg.NewHex(-bound, 0)
+	difference := a.Subtract(b)
+	want := 2 * bound
+
+	if got := difference.Length(); want != got {
+		t.Errorf("length: want %d, got %d", want, got)
+	}
+	if got := a.Distance(b); want != got {
+		t.Errorf("distance: want %d, got %d", want, got)
+	}
+}
+
 func TestHex_Neighbor(t *testing.T) {
 	from := hexg.NewHex(0, 0)
 	for _, move := range []struct {

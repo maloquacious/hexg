@@ -8,11 +8,22 @@ package hexg
 import "slices"
 
 // NewHex returns a Hex initialized from axial coordinates.
+//
+// The supported coordinate domain requires q, r, and the derived s to each be
+// between negative and positive half the platform's maximum int, inclusive.
+// On a 64-bit platform, that bound is 2^62 - 1. NewHex does not enforce this
+// domain.
 func NewHex(q, r int) Hex { // Axial constructor
 	return Hex{q: q, r: r, s: -q - r}
 }
 
-// Hex stores the `q`, `r`, and `s` coordinates.
+// Hex stores the q, r, and s coordinates, which satisfy q + r + s = 0.
+//
+// Supported coordinates are symmetric about the origin: each coordinate must
+// be between negative and positive half the platform's maximum int, inclusive.
+// On a 64-bit platform, that bound is 2^62 - 1. Construction does not enforce
+// this domain, and Add, Subtract, Multiply, and Scale may produce coordinates
+// outside it.
 type Hex struct {
 	q, r, s int
 }
@@ -85,7 +96,7 @@ func (h Hex) Multiply(k int) Hex {
 
 // Length is the distance from the origin to the hex.
 func (h Hex) Length() int {
-	return (abs(h.q) + abs(h.r) + abs(h.s)) / 2
+	return max(abs(h.q), abs(h.r), abs(h.s))
 }
 
 // Distance between two hexes is the length of the line between them.
