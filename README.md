@@ -89,6 +89,43 @@ corners := layout.PolygonCorners(hex)
 - `OddQ` - Flat-top, vertical columns, odd columns shoved down
 - `EvenQ` - Flat-top, vertical columns, even columns shoved down
 
+### Compass Bearings
+
+`Bearing` has eight distinct values: `North`, `NorthEast`, `East`, `SouthEast`,
+`South`, `SouthWest`, `West`, and `NorthWest`. These are not the integer direction
+indices accepted by `Hex.Neighbor`; convert them through the layout:
+
+```go
+layout := hexg.NewLayout(hexg.OddQ, hexg.Point{}, hexg.Point{})
+bearing, err := hexg.ParseBearing("ne") // case-insensitive, trims whitespace
+if err != nil {
+	return err
+}
+direction, err := layout.BearingToDirection(bearing)
+if err != nil {
+	return err
+}
+neighbor := hexg.NewHex(2, 3).Neighbor(direction)
+fmt.Println(bearing, direction, neighbor) // NE 1 (3, 2, -5)
+fmt.Println(bearing.Opposite())          // SW
+```
+
+- `Bearing.String` returns the abbreviation (`N`, `NE`, etc.). `Opposite` panics
+  on invalid enum values; parsing and layout conversions return errors.
+- `Layout.BearingToDirection` rejects E/W for flat-top layouts and N/S for
+  pointy-top layouts. `DirectionToBearing` converts back and rejects indices
+  outside 0..5. Odd/even parity does not change either mapping.
+- `Layout.BearingBetween(a, b)` returns the bearing from `a` to an adjacent `b`,
+  or an error if they are identical or nonadjacent. This is planar adjacency;
+  it does not recognize cylinder seams.
+- `Layout.CompassVectors` returns `[6]Hex` in clockwise order: N, NE, SE, S, SW,
+  NW for flat-top layouts; NE, E, SE, SW, W, NW for pointy-top layouts. These
+  array positions are not `Hex.Neighbor` direction indices.
+
+Bearings use north toward negative screen Y and east toward positive screen X
+for positive layout sizes. Conversions depend only on the layout orientation,
+not its pixel size or origin.
+
 ### Generating Hex Grids
 
 ```go
