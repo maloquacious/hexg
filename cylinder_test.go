@@ -254,3 +254,110 @@ func ExampleCylinder() {
 	// true true
 	// 2
 }
+
+func TestCylinder_EdgesAndVertices(t *testing.T) {
+	for _, offset := range []hexg.LayoutOffset{hexg.OddQ, hexg.EvenQ, hexg.OddR, hexg.EvenR} {
+		layout := hexg.NewLayout(offset, hexg.Point{}, hexg.Point{})
+		for _, baseColumns := range []int{3, 5} {
+			columns := baseColumns
+			if layout.IsFlat() {
+				columns++
+			}
+			c, err := hexg.NewCylinder(layout, columns, 3)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Sorted incident-cell tuples are an independent wrapped identity.
+			edgeAt := make(map[[2]hexg.Hex]hexg.Edge)
+			vertexAt := make(map[[3]hexg.Hex]hexg.Vertex)
+			edges := make(map[hexg.Edge]struct{})
+			vertices := make(map[hexg.Vertex]struct{})
+			sawSeam, sawWall := false, false
+			for row := -1; row <= c.Rows(); row++ {
+				for col := -2 * columns; col <= 2*columns; col++ {
+					h := layout.OffsetToCube(hexg.OffsetCoord{Col: col, Row: row})
+					for d := range 6 {
+						n := h.Neighbor(d)
+						e := c.Edge(h, d)
+						if c.Contains(h) && !c.Contains(n) {
+							sawWall = true
+						}
+						if c.Normalize(h).Distance(c.Normalize(n)) > 1 {
+							sawSeam = true
+						}
+						if e != c.Edge(n, d+3) || e != c.Edges(h)[d] || e != c.NormalizeEdge(h.Edge(d)) || e != c.NormalizeEdge(e) || e.Owner() != c.Normalize(e.Owner()) {
+							t.Fatalf("%v: edge not canonical at %v direction %d", offset, h, d)
+						}
+						if got, ok := c.EdgeBetween(c.Normalize(n), c.Normalize(h)); !ok || got != e {
+							t.Fatalf("%v: wrapped edge lookup: want %v, got %v, %v", offset, e, got, ok)
+						}
+						wantPair := [2]hexg.Hex{c.Normalize(h), c.Normalize(n)}
+						slices.SortFunc(wantPair[:], hexg.Hex.Compare)
+						pair := c.EdgeHexes(e)
+						if pair[0] != e.Owner() {
+							t.Fatal("edge owner is not first")
+						}
+						slices.SortFunc(pair[:], hexg.Hex.Compare)
+						if pair != wantPair {
+							t.Fatalf("%v: edge incidence: want %v, got %v", offset, wantPair, pair)
+						}
+						if prior, ok := edgeAt[wantPair]; ok && prior != e {
+							t.Fatalf("%v: wrapped edge has multiple identities", offset)
+						}
+						edgeAt[wantPair], edges[e] = e, struct{}{}
+						ends := c.EdgeVertices(e)
+						if ends[0].Compare(ends[1]) >= 0 {
+							t.Fatal("wrapped endpoints are not distinct and sorted")
+						}
+						for i, continuations := range c.EdgeContinuations(e) {
+							incident := c.VertexEdges(ends[i])
+							if continuations[0] == e || continuations[1] == e || continuations[0].Compare(continuations[1]) >= 0 || !slices.Contains(incident[:], continuations[0]) || !slices.Contains(incident[:], continuations[1]) {
+								t.Fatalf("%v: wrapped continuations are wrong", offset)
+							}
+						}
+						v := c.Vertex(h, d)
+						if v != c.Vertices(h)[d] || v != c.NormalizeVertex(h.Vertex(d)) || v != c.NormalizeVertex(v) || v.Owner() != c.Normalize(v.Owner()) {
+							t.Fatalf("%v: vertex not canonical at %v corner %d", offset, h, d)
+						}
+						wantTriple := [3]hexg.Hex{c.Normalize(h), c.Normalize(n), c.Normalize(h.Neighbor(d + 1))}
+						slices.SortFunc(wantTriple[:], hexg.Hex.Compare)
+						if got := c.VertexHexes(v); got != wantTriple {
+							t.Fatalf("%v: vertex incidence: want %v, got %v", offset, wantTriple, got)
+						}
+						for _, cell := range wantTriple {
+							corners := c.Vertices(cell)
+							if !slices.Contains(corners[:], v) {
+								t.Fatalf("%v: shared wrapped vertex not found from %v", offset, cell)
+							}
+						}
+						if prior, ok := vertexAt[wantTriple]; ok && prior != v {
+							t.Fatalf("%v: wrapped vertex has multiple identities", offset)
+						}
+						vertexAt[wantTriple], vertices[v] = v, struct{}{}
+						incident := c.VertexEdges(v)
+						if incident[0].Compare(incident[1]) >= 0 || incident[1].Compare(incident[2]) >= 0 {
+							t.Fatal("wrapped vertex edges are not distinct and sorted")
+						}
+						for _, edge := range incident {
+							ends := c.EdgeVertices(edge)
+							if !slices.Contains(ends[:], v) {
+								t.Fatalf("%v: wrapped edge-vertex incidence is not reciprocal", offset)
+							}
+						}
+						if !slices.Contains(incident[:], c.Edge(h, d)) || !slices.Contains(incident[:], c.Edge(h, d+1)) {
+							t.Fatalf("%v: wrapped vertex does not join expected edges", offset)
+						}
+					}
+				}
+			}
+			if !sawSeam || !sawWall || len(edgeAt) != len(edges) || len(vertexAt) != len(vertices) {
+				t.Fatalf("%v: missing seam/wall coverage or aliased features", offset)
+			}
+			for _, other := range []hexg.Hex{{}, hexg.NewHex(0, 3)} {
+				if _, ok := c.EdgeBetween(hexg.Hex{}, other); ok {
+					t.Fatal("accepted nonadjacent wrapped hexes")
+				}
+			}
+		}
+	}
+}

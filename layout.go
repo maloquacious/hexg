@@ -294,6 +294,27 @@ func (l Layout) PolygonCorners(h Hex) [6]Point {
 	return corners
 }
 
+// VertexToPixel returns the vertex's planar screen position, using the average
+// of its three incident hex centers. It does not normalize cylinder coordinates.
+func (l Layout) VertexToPixel(v Vertex) Point {
+	var point Point
+	for _, h := range v.Hexes() {
+		center := l.HexToPixel(h)
+		point.X += center.X / 3
+		point.Y += center.Y / 3
+	}
+	return point
+}
+
+// EdgeToPixels returns the edge's endpoints in its planar Vertices order.
+// Both endpoints use the same local copy of the edge, so even a cylinder seam
+// edge is drawn as a short segment near its owner, not across the whole world.
+// To draw another copy, construct the planar edge from a translated incident hex.
+func (l Layout) EdgeToPixels(e Edge) [2]Point {
+	vertices := e.Vertices()
+	return [2]Point{l.VertexToPixel(vertices[0]), l.VertexToPixel(vertices[1])}
+}
+
 // PixelToHexRounded converts a screen pixel to the nearest hex coordinate.
 func (l Layout) PixelToHexRounded(p Point) Hex {
 	return l.PixelToFractionalHex(p).Round()

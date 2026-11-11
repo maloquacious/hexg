@@ -216,6 +216,63 @@ if index, ok := world.Index(east); ok {
 - Walks from an off-map hex return empty results. `Index` and `HexAt` return
   false for out-of-bounds rows or indices. All operations accept wrapped copies.
 
+### Edges and Vertices
+
+`Edge` and `Vertex` are comparable, orientation-independent identifiers suitable
+for keys in Go maps and databases. Both incident hexes name the same undirected
+edge; all three incident hexes name the same vertex.
+
+```go
+h := hexg.NewHex(0, 0)
+river := h.Edge(0)
+rivers := map[hexg.Edge]bool{river: true}
+fmt.Println(rivers[h.Neighbor(0).Edge(3)]) // true
+fmt.Println(river.ConciseString())        // E:+0+0+0:0
+fmt.Println(h.Vertex(0) == h.Neighbor(0).Vertex(2)) // true
+```
+
+- `Hex.Edges()` returns `[6]Edge` in neighbor direction order. `Hex.Vertex(c)`
+  is the corner shared with neighbors in directions `c` and `c+1` (modulo 6).
+  `Hex.Vertices()` returns `[6]Vertex` in that local corner order. All single-edge
+  and single-vertex constructors coerce their direction/corner into 0..5.
+  Corner numbers are **not** `PolygonCorners` indices.
+- `EdgeBetween(a, b)` returns `(Edge, bool)`, with false for nonadjacent or
+  identical hexes. `Edge.Hexes()` returns its owner followed by its neighbor.
+  `Edge.Vertices()` returns `[2]Vertex` in `Vertex.Compare` order.
+- `Vertex.Hexes()` returns `[3]Hex` in `Hex.Compare` order; `Vertex.Edges()`
+  returns `[3]Edge` in `Edge.Compare` order. `Edge.Continuations()` returns
+  `[2][2]Edge`: the two other edges at each endpoint, with endpoints in
+  `Edge.Vertices` order and each pair in `Edge.Compare` order.
+- An edge's `Owner` sees it in `Direction` 0..2. A vertex's planar `Owner` is
+  the smallest incident hex under `Hex.Compare`; its local `Corner` is 4 or 5.
+  Each type's `Compare` orders by owner, then direction/corner. These ownership
+  rules and comparison orders are stable.
+
+For a cylinder, use `world.Edge(h, d)`, `Edges(h)`, `Vertex(h, c)`, `Vertices(h)`,
+and `EdgeBetween(a, b)`. `NormalizeEdge` and `NormalizeVertex` wrap the owner
+without changing the direction or corner class. For wrapped incidence, use
+`EdgeHexes`, `EdgeVertices`, `VertexHexes`, `VertexEdges`, and `EdgeContinuations`
+on the cylinder rather than the planar methods on the identifiers. Array order
+is the same as for planar incidence, after normalizing and re-sorting where
+applicable. These feature methods do **not** clip row walls: boundary features
+and their off-map incident hexes are retained. Filter cells with `Contains`.
+
+`Layout.VertexToPixel(v)` returns a planar point. `Layout.EdgeToPixels(e)`
+returns `[2]Point` using one local copy of the edge. This keeps seam edges short;
+do not independently draw the cylinder-normalized endpoint vertices, which may
+be in different copies. To draw another copy, construct a planar edge from a
+translated incident hex.
+
+JSON and SQL use the stable string identifiers `E:<hex>:<direction>` and
+`V:<hex>:<slot>`, with canonical signed cube coordinates for `<hex>`. Edge
+directions are 0..2; vertex slots 0..1 correspond to owner corners 4..5.
+`ParseEdge` and `ParseVertex` reject noncanonical encodings, invalid coordinates,
+and invalid slots. Both types implement JSON marshaling/unmarshaling and SQL
+`Value`/`Scan`; scanning accepts strings and byte slices, rejects NULL, and
+leaves the receiver unchanged on errors. Parsing does not normalize topology:
+normalize before storing wrapped identifiers. Cylinder dimensions and layout
+are external context, not part of the wire identifier.
+
 ### JSON Serialization
 
 Hex coordinates serialize to a compact format:

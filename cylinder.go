@@ -226,3 +226,117 @@ func (c Cylinder) HexAt(index int) (Hex, bool) {
 	}
 	return c.layout.OffsetToCube(OffsetCoord{Col: index % c.columns, Row: index / c.columns}), true
 }
+
+// NormalizeEdge returns the cylinder's canonical edge by wrapping its owner.
+// The direction is unchanged. Like Normalize, this does not clip at row walls.
+func (c Cylinder) NormalizeEdge(e Edge) Edge {
+	e.owner = c.Normalize(e.owner)
+	return e
+}
+
+// NormalizeVertex returns the cylinder's canonical vertex by wrapping its owner.
+// The corner class is unchanged. This preserves boundary and off-map vertices.
+func (c Cylinder) NormalizeVertex(v Vertex) Vertex {
+	v.owner = c.Normalize(v.owner)
+	return v
+}
+
+// Edge returns h's wrapped edge in direction, coerced to 0..5.
+// Boundary edges are retained even when a neighboring hex is outside the walls.
+func (c Cylinder) Edge(h Hex, direction int) Edge {
+	return c.NormalizeEdge(c.Normalize(h).Edge(direction))
+}
+
+// Edges returns h's wrapped edges in direction order 0..5, without row clipping.
+func (c Cylinder) Edges(h Hex) [6]Edge {
+	var edges [6]Edge
+	for direction := range edges {
+		edges[direction] = c.Edge(h, direction)
+	}
+	return edges
+}
+
+// Vertex returns h's wrapped vertex in local corner order (see Hex.Vertex).
+// Boundary vertices are retained, without row clipping.
+func (c Cylinder) Vertex(h Hex, corner int) Vertex {
+	return c.NormalizeVertex(c.Normalize(h).Vertex(corner))
+}
+
+// Vertices returns h's wrapped vertices in local corner order 0..5.
+func (c Cylinder) Vertices(h Hex) [6]Vertex {
+	var vertices [6]Vertex
+	for corner := range vertices {
+		vertices[corner] = c.Vertex(h, corner)
+	}
+	return vertices
+}
+
+// EdgeBetween returns the shared edge of wrapped neighbors, without row clipping.
+// Identical or nonadjacent hexes return the zero Edge and false.
+func (c Cylinder) EdgeBetween(a, b Hex) (Edge, bool) {
+	a, b = c.Normalize(a), c.Normalize(b)
+	for direction := range 6 {
+		if c.Normalize(a.Neighbor(direction)) == b {
+			return c.Edge(a, direction), true
+		}
+	}
+	return Edge{}, false
+}
+
+// EdgeHexes returns the normalized owner followed by the normalized hex across
+// e. Off-map rows are retained, so callers can filter with Contains.
+func (c Cylinder) EdgeHexes(e Edge) [2]Hex {
+	hexes := c.NormalizeEdge(e).Hexes()
+	for i, h := range hexes {
+		hexes[i] = c.Normalize(h)
+	}
+	return hexes
+}
+
+// EdgeVertices returns e's normalized endpoints in Vertex.Compare order.
+func (c Cylinder) EdgeVertices(e Edge) [2]Vertex {
+	vertices := c.NormalizeEdge(e).Vertices()
+	for i, v := range vertices {
+		vertices[i] = c.NormalizeVertex(v)
+	}
+	slices.SortFunc(vertices[:], Vertex.Compare)
+	return vertices
+}
+
+// VertexHexes returns v's normalized incident hexes in Hex.Compare order.
+// Off-map rows are retained, so callers can filter with Contains.
+func (c Cylinder) VertexHexes(v Vertex) [3]Hex {
+	hexes := c.NormalizeVertex(v).Hexes()
+	for i, h := range hexes {
+		hexes[i] = c.Normalize(h)
+	}
+	slices.SortFunc(hexes[:], Hex.Compare)
+	return hexes
+}
+
+// VertexEdges returns v's normalized incident edges in Edge.Compare order.
+func (c Cylinder) VertexEdges(v Vertex) [3]Edge {
+	edges := c.NormalizeVertex(v).Edges()
+	for i, e := range edges {
+		edges[i] = c.NormalizeEdge(e)
+	}
+	slices.SortFunc(edges[:], Edge.Compare)
+	return edges
+}
+
+// EdgeContinuations returns the two other edges at each of e's endpoints.
+// Endpoints are in EdgeVertices order; each pair is in Edge.Compare order.
+func (c Cylinder) EdgeContinuations(e Edge) [2][2]Edge {
+	e = c.NormalizeEdge(e)
+	var result [2][2]Edge
+	for i, v := range c.EdgeVertices(e) {
+		j := 0
+		for _, edge := range c.VertexEdges(v) {
+			if edge != e {
+				result[i][j] = edge
+				j++
+			}
+		}
+	}
+	return result
+}

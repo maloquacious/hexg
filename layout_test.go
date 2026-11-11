@@ -395,3 +395,68 @@ func TestLayout_ValueReceivers(t *testing.T) {
 		}
 	}
 }
+
+func TestLayout_EdgeAndVertexGeometry(t *testing.T) {
+	samePoint := func(a, b hexg.Point) bool {
+		return math.Abs(a.X-b.X) < 1e-9 && math.Abs(a.Y-b.Y) < 1e-9
+	}
+	for _, offset := range []hexg.LayoutOffset{hexg.OddQ, hexg.EvenQ, hexg.OddR, hexg.EvenR} {
+		layout := hexg.NewLayout(offset, hexg.Point{X: 17, Y: 29}, hexg.Point{X: -40, Y: 61})
+		for _, h := range []hexg.Hex{{}, hexg.NewHex(-2, 5)} {
+			for d := range 6 {
+				v := h.Vertex(d)
+				point := layout.VertexToPixel(v)
+				// Every incident polygon must have this exact corner. This is
+				// independent of the barycenter calculation used by VertexToPixel.
+				for _, cell := range v.Hexes() {
+					found := 0
+					for _, corner := range layout.PolygonCorners(cell) {
+						if samePoint(point, corner) {
+							found++
+						}
+					}
+					if found != 1 {
+						t.Fatalf("%v: vertex %v at %v is not a corner of %v", offset, v, point, cell)
+					}
+				}
+				e := h.Edge(d)
+				points := layout.EdgeToPixels(e)
+				if samePoint(points[0], points[1]) {
+					t.Fatal("edge endpoints coincide")
+				}
+				shared := 0
+				for _, a := range layout.PolygonCorners(h) {
+					for _, b := range layout.PolygonCorners(h.Neighbor(d)) {
+						if samePoint(a, b) {
+							shared++
+							if !samePoint(a, points[0]) && !samePoint(a, points[1]) {
+								t.Fatalf("%v: edge does not follow the shared polygon side", offset)
+							}
+						}
+					}
+				}
+				if shared != 2 {
+					t.Fatalf("%v: want two shared polygon corners, got %d", offset, shared)
+				}
+			}
+		}
+		columns := 31
+		if layout.IsFlat() {
+			columns++
+		}
+		c, err := hexg.NewCylinder(layout, columns, 3)
+		if err != nil {
+			t.Fatal(err)
+		}
+		h := layout.OffsetToCube(hexg.OffsetCoord{Col: 0, Row: 1})
+		e := c.Edge(h, 3)
+		cells := c.EdgeHexes(e)
+		if cells[0].Distance(cells[1]) <= 1 {
+			t.Fatal("geometry test did not exercise a seam")
+		}
+		points := layout.EdgeToPixels(e)
+		if length := math.Hypot(points[0].X-points[1].X, points[0].Y-points[1].Y); length <= 0 || length > 29 {
+			t.Fatalf("%v: seam edge is not a local segment: length %g", offset, length)
+		}
+	}
+}
