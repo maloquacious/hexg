@@ -138,6 +138,47 @@ col, row := offset.Col, offset.Row
 hexBack := offset.ROffsetToCube(false)
 ```
 
+### Cylindrical Worlds
+
+`Cylinder` wraps an offset rectangle east-west and walls its north and south
+edges. `NewCylinder(layout, columns, rows)` returns an error for invalid
+dimensions: Q layouts require even columns of at least 4, R layouts require odd
+columns of at least 3, and rows must be positive. The total cell count must fit
+in an `int`. Canonical offset columns and rows start at zero.
+
+```go
+layout := hexg.NewLayout(hexg.OddQ, hexg.Point{X: 32, Y: 32}, hexg.Point{})
+world, err := hexg.NewCylinder(layout, 1920, 1080)
+if err != nil {
+	return err
+}
+
+west := layout.OffsetToCube(hexg.OffsetCoord{Col: 0, Row: 540})
+east := layout.OffsetToCube(hexg.OffsetCoord{Col: 1919, Row: 540})
+distance := world.Distance(west, east) // 1, across the seam
+line := world.LineDraw(west, east)    // both endpoints, along a shortest route
+
+// Dense storage: index = row*columns + col.
+cells := make([]int, world.Columns()*world.Rows())
+if index, ok := world.Index(east); ok {
+	cells[index] = 1
+	h, _ := world.HexAt(index) // inverse lookup; h == east
+	_ = h
+}
+```
+
+- `Normalize` wraps the offset column without changing the offset row.
+- `Contains` checks the row bounds; noncanonical columns are accepted.
+- `Neighbor` returns `(Hex, bool)`, with false for a step through a wall.
+  `Neighbors` omits those steps and returns the others in direction order 0..5.
+- `Ring` returns hexes at exactly the wrapped radius; `Spiral` returns hexes
+  within it. Both clip at the walls, remove duplicates, and sort by `Hex.Compare`.
+  Negative radii panic, as on `Hex`.
+- `LineDraw` stays on the map. Equal-length routes prefer the canonical endpoint
+  copy, then west, then east; step ties prefer direction order 0..5.
+- Walks from an off-map hex return empty results. `Index` and `HexAt` return
+  false for out-of-bounds rows or indices. All operations accept wrapped copies.
+
 ### JSON Serialization
 
 Hex coordinates serialize to a compact format:
